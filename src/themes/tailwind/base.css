@@ -1,0 +1,20 @@
+@layer base {
+    h1 {
+        @apply text-display-lg;
+    }
+    h2 {
+        @apply text-display-md;
+    }
+    h3 {
+        @apply text-headline-lg;
+    }
+    h4 {
+        @apply text-title-lg;
+    }
+    h5 {
+        @apply text-title-md;
+    }
+    h6 {
+        @apply text-body-lg;
+    }
+}

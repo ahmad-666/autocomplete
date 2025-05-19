@@ -1,0 +1,22 @@
+@theme inline {
+    /* viewport breakpoints */
+    --breakpoint-*: initial;
+    --breakpoint-mobile: 500px;
+    --breakpoint-tablet: 800px;
+    --breakpoint-laptop: 1100px;
+    --breakpoint-desktop: 1400px;
+    --breakpoint-desktop-2xl: 1700px;
+    --breakpoint-desktop-3xl: 2000px;
+    --breakpoint-desktop-4xl: 2500px;
+    --breakpoint-desktop-5xl: 3000px;
+    /* container queries breakpoints */
+    --container-*: initial;
+    --container-mobile: var(--breakpoint-mobile);
+    --container-tablet: var(--breakpoint-tablet);
+    --container-laptop: var(--breakpoint-laptop);
+    --container-desktop: var(--breakpoint-desktop);
+    --container-desktop-2xl: var(--breakpoint-desktop-2xl);
+    --container-desktop-3xl: var(--breakpoint-desktop-3xl);
+    --container-desktop-4xl: var(--breakpoint-desktop-4xl);
+    --container-desktop-5xl: var(--breakpoint-desktop-5xl);
+}

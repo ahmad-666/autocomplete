@@ -1,0 +1,45 @@
+{
+    "name": "auto-complete",
+    "version": "1.0.0",
+    "private": true,
+    "description": "react auto complete component",
+    "scripts": {
+        "dev": "next dev --turbopack",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
+    },
+    "dependencies": {
+        "dayjs": "^1.11.13",
+        "next": "15.3.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-hook-form": "^7.55.0"
+    },
+    "devDependencies": {
+        "@eslint/eslintrc": "^3",
+        "@iconify/react": "^5.2.1",
+        "@tailwindcss/postcss": "^4",
+        "@types/js-cookie": "^3.0.6",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "autoprefixer": "^10.4.21",
+        "eslint": "^9",
+        "eslint-config-next": "15.3.0",
+        "postcss": "^8.5.3",
+        "prettier": "^3.5.3",
+        "prettier-plugin-tailwindcss": "^0.6.11",
+        "sass": "^1.86.3",
+        "tailwindcss": "^4",
+        "typescript": "^5"
+    },
+    "contributors": [
+        {
+            "name": "Ahmad-Reza Ghazian",
+            "email": "ahmadrezagghz666@gmail.com"
+        }
+    ],
+    "packageManager": "pnpm@10.10.0"
+}

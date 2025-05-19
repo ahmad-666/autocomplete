@@ -1,0 +1,27 @@
+@layer components {
+    .base-container {
+        @apply overflow-hidden;
+        &.sm {
+            --mobile-size: 75%;
+            --desktop-size: --spacing(270);
+        }
+        &.md {
+            --mobile-size: 90%;
+            --desktop-size: --spacing(330);
+        }
+        &.lg {
+            --mobile-size: 98%;
+            --desktop-size: --spacing(360);
+        }
+        &:not(.left-stick, .right-stick) {
+            @apply desktop:w-(--desktop-size) mr-auto ml-auto w-(--mobile-size);
+        }
+        &.left-stick {
+            @apply desktop:pr-[calc((100%-var(--desktop-size))/2)] mr-auto ml-0 w-full pr-[calc((100%-var(--mobile-size))/2)];
+        }
+        &.right-stick {
+            @apply desktop:pl-[calc((100%-var(--desktop-size))/2)] mr-0 ml-auto w-full pl-[calc((100%-var(--mobile-size))/2)];
+        }
+        /* <div className='base-container md left-stick' /> */
+    }
+}

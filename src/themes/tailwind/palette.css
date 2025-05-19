@@ -1,0 +1,70 @@
+@theme static {
+    /*? we use 'static' because we want to be sure 'useColor' will always work even if we don't use those colors as tailwind utility classes */
+    /*? all colors must be in this format: --color-<color-name>-<color-variant> */
+    /** E.g: --color-primary,--color-pastelPink,--color-primary-light5,--color-primary-dark5,--color-primary-surface,--color-primary-surfaceLight,... */
+
+    /* primary color  */
+    --color-primary-light5: #f7edff;
+    --color-primary-light4: #ecdcff;
+    --color-primary-light3: #d5baff;
+    --color-primary-light2: #a875fd;
+    --color-primary-light1: #8e5ae1;
+    --color-primary-surfaceLight: #f3eeff;
+    /* --color-primary-light1: color-mix(in srgb,var(--color-primary),white 10%); */
+    --color-primary: #743ec6;
+    --color-primary-surface: #6f61f4;
+    /* --color-primary-dark1: color-mix(in srgb,var(--color-primary),black 10%); */
+    --color-primary-surfaceDark: #150067;
+    --color-primary-dark1: #5b20ad;
+    --color-primary-dark2: #42008a;
+    --color-primary-dark3: #340070;
+    --color-primary-dark4: #270057;
+    --color-primary-dark5: #19003d;
+    /* neutral color  */
+    --color-neutral-light5: #f8f8f8;
+    --color-neutral-light4: #f3f3f3;
+    --color-neutral-light3: #e8e8e8;
+    --color-neutral-light2: #cccccc;
+    --color-neutral-light1: #adadad;
+    --color-neutral: #828282;
+    --color-neutral-dark1: #646464;
+    --color-neutral-dark2: #454545;
+    --color-neutral-dark3: #2f2f2f;
+    --color-neutral-dark4: #0c0c0c;
+    --color-neutral-dark5: #0c0c0c;
+    /* success color  */
+    --color-success-light3: #f6fff1;
+    --color-success-light2: #ebffe7;
+    --color-success-light1: #b1f2b5;
+    --color-success: #32c45e;
+    --color-success-dark1: #003914;
+    /* info color  */
+    --color-info-light3: #f0fbff;
+    --color-info-light2: #d7f6ff;
+    --color-info-light1: #aaedff;
+    --color-info: #33bad5;
+    --color-info-dark1: #003640;
+    /* warning color  */
+    --color-warning-light3: #fff8f2;
+    --color-warning-light2: #ffefd3;
+    --color-warning-light1: #ffdf9a;
+    --color-warning: #eab308;
+    --color-warning-dark1: #d19907;
+    --color-warning-dark2: #b88006;
+    --color-warning-dark3: #9e6605;
+    --color-warning-dark4: #854d04;
+    --color-warning-dark4: #854d04;
+    --color-warning-dark5: #3f2e00;
+    /* error color  */
+    --color-error-light3: #fff8f7;
+    --color-error-light2: #ffedeb;
+    --color-error-light1: #ffdad7;
+    --color-error: #ee3038;
+    --color-error-dark1: #68000b;
+    /* pastel-pink color  */
+    --color-pastelPink-light3: #ffe9f6;
+    --color-pastelPink-light2: #ffcfec;
+    --color-pastelPink-light1: #ffa7dc;
+    --color-pastelPink: #ff7bca;
+    --color-pastelPink-dark1: #aa0a6a;
+}

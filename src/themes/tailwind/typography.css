@@ -1,0 +1,96 @@
+@theme inline {
+    /* font-weights */
+    --font-weight-*: initial;
+    --font-weight-thin: 100;
+    --font-weight-extralight: 200;
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    --font-weight-black: 900;
+    /* line-height */
+    /* --leading-*: initial; */
+    --leading-display-lg: 5.75rem;
+    --leading-display-md: 3.5rem;
+    --leading-headline-lg: 2.75rem;
+    --leading-title-lg: 1.25rem;
+    --leading-title-md: 1.25rem;
+    --leading-label-lg: 1rem;
+    --leading-label-md: 1rem;
+    --leading-label-sm: 1rem;
+    --leading-body-lg: 2.25rem;
+    --leading-body-md: 1.75rem;
+    --leading-body-sm: 1.75rem;
+    /* letter-spacing  */
+    /* --tracking-*: initial; */
+    --tracking-display-lg: var(--tracking-wide);
+    --tracking-display-md: var(--tracking-wide);
+    --tracking-headline-lg: var(--tracking-wide);
+    --tracking-title-lg: var(--tracking-normal);
+    --tracking-title-md: var(--tracking-normal);
+    --tracking-label-lg: var(--tracking-normal);
+    --tracking-label-md: var(--tracking-normal);
+    --tracking-label-sm: var(--tracking-normal);
+    --tracking-body-lg: var(--tracking-normal);
+    --tracking-body-md: var(--tracking-normal);
+    --tracking-body-sm: var(--tracking-normal);
+    /* typography */
+    --text-*: initial;
+    /* ----------------- */
+    --text-display-lg: 4.75rem;
+    --text-display-lg--font-weight: var(--font-weight-extrabold);
+    --text-display-lg--line-height: var(--leading-display-lg);
+    --text-display-lg--letter-spacing: var(--tracking-display-lg);
+    /* ----------------- */
+    --text-display-md: 3rem;
+    --text-display-md--font-weight: var(--font-weight-bold);
+    --text-display-md--line-height: var(--leading-display-md);
+    --text-display-md--letter-spacing: var(--tracking-display-md);
+    /* ----------------- */
+    --text-headline-lg: 2rem;
+    --text-headline-lg--font-weight: var(--font-weight-bold);
+    --text-headline-lg--line-height: var(--leading-headline-lg);
+    --text-headline-lg--letter-spacing: var(--tracking-headline-lg);
+    /* ----------------- */
+    --text-title-lg: 1.125rem;
+    --text-title-lg--font-weight: var(--font-weight-semibold);
+    --text-title-lg--line-height: var(--leading-title-lg);
+    --text-title-lg--letter-spacing: var(--tracking-title-lg);
+    /* ----------------- */
+    --text-title-md: 1rem;
+    --text-title-md--font-weight: var(--font-weight-semibold);
+    --text-title-md--line-height: var(--leading-title-md);
+    --text-title-md--letter-spacing: var(--tracking-title-md);
+    /* ----------------- */
+    --text-label-lg: 0.875rem;
+    --text-label-lg--font-weight: var(--font-weight-semibold);
+    --text-label-lg--line-height: var(--leading-label-lg);
+    --text-label-lg--letter-spacing: var(--tracking-label-lg);
+    /* ----------------- */
+    --text-label-md: 0.75rem;
+    --text-label-md--font-weight: var(--font-weight-semibold);
+    --text-label-md--line-height: var(--leading-label-md);
+    --text-label-md--letter-spacing: var(--tracking-label-md);
+    /* ----------------- */
+    --text-label-sm: 0.625rem;
+    --text-label-sm--font-weight: var(--font-weight-medium);
+    --text-label-sm--line-height: var(--leading-label-sm);
+    --text-label-sm--letter-spacing: var(--tracking-label-sm);
+    /* ----------------- */
+    --text-body-lg: 1.25rem;
+    --text-body-lg--font-weight: var(--font-weight-medium);
+    --text-body-lg--line-height: var(--leading-body-lg);
+    --text-body-lg--letter-spacing: var(--tracking-body-lg);
+    /* ----------------- */
+    --text-body-md: 1rem;
+    --text-body-md--font-weight: var(--font-weight-medium);
+    --text-body-md--line-height: var(--leading-body-md);
+    --text-body-md--letter-spacing: var(--tracking-body-md);
+    /* ----------------- */
+    --text-body-sm: 0.875rem;
+    --text-body-sm--font-weight: var(--font-weight-medium);
+    --text-body-sm--line-height: var(--leading-body-sm);
+    --text-body-sm--letter-spacing: var(--tracking-body-sm);
+}

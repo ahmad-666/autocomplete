@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+@import './palette.css';
+@import './typography.css';
+@import './radius.css';
+@import './shadow.css';
+@import './animation.css';
+@import './breakpoints.css';
+@import './base.css';
+@import './components.css';
+
+@theme {
+    --spacing: 4px;
+}

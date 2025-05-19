@@ -1,0 +1,56 @@
+@import '../themes/tailwind/config.css';
+/* globally add tailwind  */
+
+:root {
+    font-size: 16px;
+}
+
+html,
+body {
+    height: 100%;
+}
+body {
+    font-family: var(--font-manrope), Roboto, sans-serif;
+    font-size: 1rem;
+    color: #0c0c0c;
+    background: white;
+    scroll-behavior: smooth;
+}
+
+/* hide arrows of input[type="number"] for chrome,safari,edge,opera */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+/* hide arrows of input[type="number"] for firefox */
+input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* remove auto-fill default styles from form elements  */
+input,
+textarea,
+select {
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 100px white inset !important;
+        -webkit-text-fill-color: inherit !important ;
+        caret-color: inherit !important;
+    }
+}
+
+@media screen and (width < theme(--breakpoint-laptop)) {
+    :root {
+        font-size: 14px;
+    }
+}
+/* @media (prefers-color-scheme: dark) {
+    body {
+        background: #2f2f2f;
+        color: #f8f8f8;
+    }
+} */
