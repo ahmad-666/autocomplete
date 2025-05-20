@@ -6,5 +6,8 @@
         &:hover {
             background-color: var(--hover-color);
         }
+        &.selected {
+            background-color: var(--selection-color);
+        }
     }
 }

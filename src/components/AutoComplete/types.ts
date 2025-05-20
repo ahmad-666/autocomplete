@@ -91,7 +91,7 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     /** if true we filter those options that we select from menu */
     filterSelections?: boolean;
     /** custom function to filter options */
-    filterFn: (search: string, options: Opt[]) => Opt[];
+    filterFn?: (search: string, options: Opt[]) => Opt[];
     /** icon for prependOuterIcon */
     prependOuterIcon?: string;
     /** render custom jsx for prependOuterIcon */

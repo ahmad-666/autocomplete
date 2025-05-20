@@ -1,5 +1,8 @@
 @theme {
-    --shadow-sm: 0 2px 3px 0 rgb(0 0 0 / 0.1); /* just override shadow-sm of tailwind , we can use shadow-sm shadow-primary/50  /*
+    /* just override shadow-sm of tailwind , we can use shadow-sm shadow-primary/50   */
+    --shadow-sm: 0 2px 3px 0 rgb(0 0 0 / 0.1);
+    --shadow-full-sm: 0 0 3px 0 rgb(0 0 0 / 0.1);
+    --shadow-full-md: 0 0 6px 0 rgb(0 0 0 / 0.2);
     /* --inset-shadow-sm: 0 2px 3px 0 rgb(0 0 0 / 0.1) ;
     --drop-shadow-sm: 0 2px 3px 0 rgb(0 0 0 / 0.1) ; */
 }

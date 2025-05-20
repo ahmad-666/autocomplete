@@ -19,9 +19,9 @@ import CircularLoader from '@/components/CircularLoader';
 import Menu from '@/components/Menu';
 import Checkbox from '@/components/Checkbox';
 import useColor from '@/hooks/useColor';
-import useClickOutside from '@/hooks/useClickOutside';
 import colors from './colors';
 import type { AutoCompleteProps, Option } from './types';
+export { type Option } from './types';
 import styles from './styles.module.css';
 
 const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean = false>({
@@ -87,7 +87,6 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const [isFocus, setIsFocus] = useState(false);
     const [searchLocal, setSearchLocal] = useState(search || '');
     const [menuLocal, setMenuLocal] = useState(menu || false);
-    const isClickedOutside = useClickOutside(containerRef);
     const parsedPrimaryColor = useColor(theme.primary || colors.primary!);
     const parsedOutlineColor = useColor(theme.outline || colors.outline!);
     const parsedFillColor = useColor(theme.fill || colors.fill!);
@@ -117,22 +116,41 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
             });
         return result;
     }, [options, searchLocal, filterSelections, isOptionSelected, filterFn]);
-    const onFocusHandler = (e: FocusEvent<HTMLInputElement>) => {
-        inputRef.current.focus();
+    const openMenu = () => {
         setIsFocus(true);
+        inputRef.current.focus();
+        setMenuLocal(true);
+        onMenuChange?.(true);
+    };
+    const closeMenu = () => {
+        setIsFocus(false);
+        setMenuLocal(false);
+        onMenuChange?.(false);
+        if (!multiple) {
+            setSearchLocal((value as Opt)?.label || '');
+            onSearchChange?.((value as Opt)?.label || '');
+        } else {
+            setSearchLocal('');
+            onSearchChange?.('');
+        }
+    };
+    const onContainerFocusHandler = (e: FocusEvent<HTMLInputElement>) => {
+        openMenu();
         onFocus?.(e);
     };
-    const onBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-        setIsFocus(false);
+    const onContainerBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
+        // no need for any useClickOutside hook and check on its return value on useEffect because we use onFocus,onBlur event then it will handle all cases
+        closeMenu();
         onBlur?.(e);
+    };
+    const onContainerClickHandler = () => {
+        //always open menu on container click
+        setTimeout(() => {
+            openMenu();
+        }, 0);
     };
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         onKeyDown?.(e);
-    };
-    const onContainerClickHandler = () => {
-        const newVal = !menuLocal;
-        setMenuLocal(newVal);
-        onMenuChange?.(newVal);
     };
     const onSearchChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
         const newVal = e.target.value;
@@ -145,6 +163,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
             newValue = option;
             setMenuLocal(false);
             onMenuChange?.(false);
+            setSearchLocal(option.label);
+            onSearchChange?.(option.label);
         } else {
             const isChecked = !!(value as Opt[]).find((val) => val.value === option.value);
             if (!isChecked) newValue = [...(value as Opt[]), option];
@@ -164,16 +184,11 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         onChange?.(newValue);
     };
     const onClearHandler = () => {
+        setSearchLocal('');
+        onSearchChange?.('');
         //@ts-expect-error 'we manually handle it'
         onChange?.(!multiple ? null : []);
     };
-    useEffect(() => {
-        //close menu if user clicks outside of container element
-        if (isClickedOutside) {
-            setMenuLocal(false);
-            onMenuChange?.(false);
-        }
-    }, [isClickedOutside, onMenuChange]);
     useEffect(() => {
         //update local state for search every time 'search' prop changes
         setSearchLocal(search || '');
@@ -201,10 +216,11 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         >
             <div
                 ref={containerRef}
-                onFocus={onFocusHandler}
-                onBlur={onBlurHandler}
+                tabIndex={0}
+                onFocus={onContainerFocusHandler}
+                onBlur={onContainerBlurHandler}
                 onClick={onContainerClickHandler}
-                className={`${classNames.container}`}
+                className={`outline-none ${classNames.container}`}
             >
                 {!!label && (
                     <FormLabel inputId={finalId} className={`mb-3 ${classNames.label}`}>
@@ -213,13 +229,13 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                 )}
                 <div className={`flex items-center gap-2 ${readOnly ? 'pointer-events-none' : ''}`}>
                     {!!(prependOuterRender || prependOuterIcon) && (
-                        <div className='flex items-center gap-2'>
+                        <div className='flex shrink-0 items-center gap-2'>
                             {prependOuterRender?.({ isFocus, isError })}
                             {!!prependOuterIcon && <Icon icon={prependOuterIcon} size='md' color={accentColor} />}
                         </div>
                     )}
                     <div
-                        className={`relative flex items-center gap-2 overflow-hidden rounded-sm border border-solid`}
+                        className={`relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md border-solid px-2 ${isFocus ? 'border-2' : 'border'}`}
                         style={{
                             minHeight: multiple ? `${textfieldHeight}px` : 'initial',
                             height: !multiple ? `${textfieldHeight}px` : 'auto',
@@ -233,14 +249,14 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         }}
                     >
                         {!!(prependInnerRender || prependInnerIcon) && (
-                            <div className='flex items-center gap-2'>
+                            <div className='flex shrink-0 items-center gap-2'>
                                 {prependInnerRender?.({ isFocus, isError })}
                                 {!!prependInnerIcon && <Icon icon={prependInnerIcon} size='md' color={accentColor} />}
                             </div>
                         )}
                         <div className='flex grow items-center justify-between gap-2'>
                             <div
-                                className={`flex flex-wrap gap-2 ${!isFocus || multiple ? 'block' : 'hidden'} ${classNames.valueContainer}`}
+                                className={`flex grow flex-wrap gap-2 ${!isFocus || multiple ? 'block' : 'hidden'} ${classNames.valueContainer}`}
                             >
                                 {valueRender?.(value) ||
                                     (!multiple ? (
@@ -256,7 +272,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                         (value as Opt[]).map((val) => (
                                             <div
                                                 key={val.value}
-                                                className={`text-body-md rounded-sm text-white ${classNames.value}`}
+                                                className={`text-body-md rounded-md text-white ${classNames.value}`}
                                                 style={{
                                                     backgroundColor: parsedPrimaryColor
                                                 }}
@@ -280,40 +296,41 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                 readOnly={readOnly || mode === 'select'}
                                 disabled={disabled}
                                 placeholder={placeholder}
-                                className={`text-body-md placeholder:text-label-md placeholder:text-slate-300 ${isFocus ? 'inline-block' : 'hidden'} ${classNames.input}`}
+                                className={`text-body-md placeholder:text-label-md min-w-20 shrink-0 appearance-none outline-none placeholder:text-slate-300 ${isFocus ? 'inline-block' : 'hidden'} ${classNames.input}`}
                                 style={{
                                     color: parsedTextColor
                                 }}
                             />
-                            <div className='flex items-center gap-2'>
-                                <Icon
-                                    icon='mdi:chevron-down'
-                                    size='md'
-                                    color={accentColor}
-                                    className={`transition-transform duration-300 ${menuLocal ? '-rotate-180' : ''}`}
-                                />
-                                {loading && (
-                                    <CircularLoader size='sm' thickness={3} color={theme.primary} duration={1000} />
-                                )}
-                                {clearable && (
-                                    <button onClick={onClearHandler}>
-                                        <Icon icon='mdi:close' size='md' color={accentColor} />
-                                    </button>
-                                )}
-                                {!!appendInnerIcon && <Icon icon={appendInnerIcon} size='md' color={accentColor} />}
-                                {appendInnerRender?.({ isFocus, isError })}
-                            </div>
+                        </div>
+                        <div className='flex shrink-0 items-center gap-2'>
+                            <Icon
+                                icon='mdi:chevron-down'
+                                size='md'
+                                color={accentColor}
+                                className={`transition-transform duration-300 ${menuLocal ? '-rotate-180' : ''}`}
+                            />
+                            {loading && (
+                                <CircularLoader size='sm' thickness={3} color={theme.primary} duration={1000} />
+                            )}
+                            {clearable && (
+                                <button onClick={onClearHandler}>
+                                    <Icon icon='mdi:close' size='md' color={accentColor} />
+                                </button>
+                            )}
+                            {!!appendInnerIcon && <Icon icon={appendInnerIcon} size='md' color={accentColor} />}
+                            {appendInnerRender?.({ isFocus, isError })}
                         </div>
                         <Menu
                             open={menuLocal}
                             position='left-bottom'
                             zIndex={2}
                             animation='fade-in'
-                            className={`max-h-40 w-full rounded-md bg-white px-4 py-0 shadow-sm ${classNames.menu}`}
+                            offset={{ y: 5 }}
+                            className={`shadow-full-md max-h-64 w-full overflow-auto rounded-md bg-white !p-0 ${classNames.menu}`}
                         >
                             {loading && (
                                 <p
-                                    className={`text-title-md text-center ${classNames.loadingText}`}
+                                    className={`text-title-md p-4 text-center ${classNames.loadingText}`}
                                     style={{
                                         color: parsedTextColor
                                     }}
@@ -323,7 +340,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                             )}
                             {!filteredOptions.length && (
                                 <p
-                                    className={`text-title-md text-center ${classNames.noDataText}`}
+                                    className={`text-title-md p-4 text-center ${classNames.noDataText}`}
                                     style={{
                                         color: parsedTextColor
                                     }}
@@ -340,10 +357,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                 key={option.value}
                                                 role={!option.disabled ? 'button' : undefined}
                                                 onClick={() => onOptionClickHandler(option)}
-                                                className={`cursor-pointer bg-transparent py-4 transition-colors duration-300 first:pt-0 last:pb-0 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles['option']} ${classNames.option}`}
-                                                style={{
-                                                    backgroundColor: isSelected ? parsedSelectionColor : 'transparent'
-                                                }}
+                                                className={`cursor-pointer bg-transparent p-2 transition-colors duration-300 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles.option} ${isSelected ? styles.selected : ''} ${classNames.option}`}
                                             >
                                                 {optionRender?.(option, value, isSelected) ||
                                                     (!multiple ? (
@@ -382,7 +396,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         </Menu>
                     </div>
                     {!!(appendOuterIcon || appendOuterRender) && (
-                        <div className='flex items-center gap-2'>
+                        <div className='flex shrink-0 items-center gap-2'>
                             {!!appendOuterIcon && <Icon icon={appendOuterIcon} size='md' color={accentColor} />}
                             {appendOuterRender?.({ isFocus, isError })}
                         </div>
