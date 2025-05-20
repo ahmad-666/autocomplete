@@ -2,7 +2,7 @@
 
 .container {
     /* here we have --primary-color, --outline-color, --fill-color, --text-color, --hover-color, --selection-color, --error-color css variables */
-    .option-list-item {
+    .option {
         &:hover {
             background-color: var(--hover-color);
         }

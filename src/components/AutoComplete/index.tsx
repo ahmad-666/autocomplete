@@ -65,16 +65,29 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     onBlur,
     onKeyDown,
     theme = colors,
+    classNames = {
+        container: '',
+        label: '',
+        input: '',
+        menu: '',
+        option: '',
+        loadingText: '',
+        noDataText: '',
+        valueContainer: '',
+        value: '',
+        message: ''
+    },
     className = '',
     style
 }: AutoCompleteProps<Opt, Multiple>) => {
+    const containerRef = useRef<HTMLDivElement>(null!);
+    const inputRef = useRef<HTMLInputElement>(null!);
     const randomId = useId().replace(/\W/g, '').toLowerCase();
     const finalId = inputId || randomId;
-    const activatorRef = useRef<HTMLDivElement>(null!);
     const [isFocus, setIsFocus] = useState(false);
     const [searchLocal, setSearchLocal] = useState(search || '');
     const [menuLocal, setMenuLocal] = useState(menu || false);
-    const isClickedOutside = useClickOutside(activatorRef);
+    const isClickedOutside = useClickOutside(containerRef);
     const parsedPrimaryColor = useColor(theme.primary || colors.primary!);
     const parsedOutlineColor = useColor(theme.outline || colors.outline!);
     const parsedFillColor = useColor(theme.fill || colors.fill!);
@@ -84,6 +97,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const parsedErrorColor = useColor(theme.error || colors.error!);
     const isError = !!error;
     const accentColor = isError ? theme.error : isFocus ? theme.primary : theme.text;
+    const parseAccentColor = useColor(accentColor!);
     const textfieldHeight = size === 'sm' ? 32 : size === 'md' ? 40 : size === 'lg' ? 48 : size;
     const isOptionSelected = useCallback(
         (option: Opt) => {
@@ -103,8 +117,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
             });
         return result;
     }, [options, searchLocal, filterSelections, isOptionSelected, filterFn]);
-
     const onFocusHandler = (e: FocusEvent<HTMLInputElement>) => {
+        inputRef.current.focus();
         setIsFocus(true);
         onFocus?.(e);
     };
@@ -115,7 +129,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         onKeyDown?.(e);
     };
-    const onActivatorClickHandler = () => {
+    const onContainerClickHandler = () => {
         const newVal = !menuLocal;
         setMenuLocal(newVal);
         onMenuChange?.(newVal);
@@ -125,23 +139,36 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         setSearchLocal(newVal);
         onSearchChange?.(newVal);
     };
-    const onCheckboxChangeHandler = (checked: boolean, checkboxValue: string) => {
-        //here we know that we have multiple:true and value:Opt[]
-        if (multiple) {
-            let newValue: Opt[] = [];
-            const targetOption = options.find((option) => option.value === checkboxValue);
-            if (checked && targetOption) newValue = [...(value as Opt[]), targetOption];
-            else newValue = (value as Opt[]).filter((val) => val.value !== checkboxValue);
-            //@ts-expect-error 'we manually handle it'
-            onChange?.(newValue);
+    const onOptionClickHandler = (option: Opt) => {
+        let newValue: Opt | Opt[];
+        if (!multiple) {
+            newValue = option;
+            setMenuLocal(false);
+            onMenuChange?.(false);
+        } else {
+            const isChecked = !!(value as Opt[]).find((val) => val.value === option.value);
+            if (!isChecked) newValue = [...(value as Opt[]), option];
+            else newValue = (value as Opt[]).filter((val) => val.value !== option.value);
         }
+        //@ts-expect-error 'we manually handle it'
+        onChange?.(newValue);
+    };
+    const onChipCloseHandler = (chipOption: Opt) => {
+        let newValue: null | Opt[];
+        if (!multiple) {
+            newValue = null;
+        } else {
+            newValue = (value as Opt[]).filter((val) => val.value !== chipOption.value);
+        }
+        //@ts-expect-error 'we manually handle it'
+        onChange?.(newValue);
     };
     const onClearHandler = () => {
         //@ts-expect-error 'we manually handle it'
         onChange?.(!multiple ? null : []);
     };
     useEffect(() => {
-        //close menu if user clicks outside of activator element
+        //close menu if user clicks outside of container element
         if (isClickedOutside) {
             setMenuLocal(false);
             onMenuChange?.(false);
@@ -172,9 +199,15 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                 } as CSSProperties
             }
         >
-            <div ref={activatorRef} onFocus={onFocusHandler} onBlur={onBlurHandler} onClick={onActivatorClickHandler}>
+            <div
+                ref={containerRef}
+                onFocus={onFocusHandler}
+                onBlur={onBlurHandler}
+                onClick={onContainerClickHandler}
+                className={`${classNames.container}`}
+            >
                 {!!label && (
-                    <FormLabel inputId={finalId} className='mb-3'>
+                    <FormLabel inputId={finalId} className={`mb-3 ${classNames.label}`}>
                         {label}
                     </FormLabel>
                 )}
@@ -186,13 +219,17 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         </div>
                     )}
                     <div
-                        className={`text-body-md relative flex items-center gap-2 overflow-hidden rounded-sm border border-solid`}
+                        className={`relative flex items-center gap-2 overflow-hidden rounded-sm border border-solid`}
                         style={{
                             minHeight: multiple ? `${textfieldHeight}px` : 'initial',
                             height: !multiple ? `${textfieldHeight}px` : 'auto',
-                            color: parsedTextColor,
                             backgroundColor: variant === 'filled' ? parsedFillColor : 'transparent',
-                            borderColor: variant === 'outline' ? parsedOutlineColor : 'transparent'
+                            borderColor:
+                                variant === 'outline'
+                                    ? isFocus || isError
+                                        ? parseAccentColor
+                                        : parsedOutlineColor
+                                    : 'transparent'
                         }}
                     >
                         {!!(prependInnerRender || prependInnerIcon) && (
@@ -202,7 +239,38 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                             </div>
                         )}
                         <div className='flex grow items-center justify-between gap-2'>
+                            <div
+                                className={`flex flex-wrap gap-2 ${!isFocus || multiple ? 'block' : 'hidden'} ${classNames.valueContainer}`}
+                            >
+                                {valueRender?.(value) ||
+                                    (!multiple ? (
+                                        <p
+                                            className={`text-body-md ${classNames.value}`}
+                                            style={{
+                                                color: parsedTextColor
+                                            }}
+                                        >
+                                            {(value as Opt)?.label}
+                                        </p>
+                                    ) : (
+                                        (value as Opt[]).map((val) => (
+                                            <div
+                                                key={val.value}
+                                                className={`text-body-md rounded-sm text-white ${classNames.value}`}
+                                                style={{
+                                                    backgroundColor: parsedPrimaryColor
+                                                }}
+                                            >
+                                                {val.label}
+                                                <button onClick={() => onChipCloseHandler(val)} className='ml-2'>
+                                                    <Icon icon='mdi:close' size='sm' color='white' />
+                                                </button>
+                                            </div>
+                                        ))
+                                    ))}
+                            </div>
                             <input
+                                ref={inputRef}
                                 type='text'
                                 id={finalId}
                                 name={inputName}
@@ -212,7 +280,10 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                 readOnly={readOnly || mode === 'select'}
                                 disabled={disabled}
                                 placeholder={placeholder}
-                                className='text-inherit'
+                                className={`text-body-md placeholder:text-label-md placeholder:text-slate-300 ${isFocus ? 'inline-block' : 'hidden'} ${classNames.input}`}
+                                style={{
+                                    color: parsedTextColor
+                                }}
                             />
                             <div className='flex items-center gap-2'>
                                 <Icon
@@ -229,24 +300,36 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                         <Icon icon='mdi:close' size='md' color={accentColor} />
                                     </button>
                                 )}
-                            </div>
-                        </div>
-                        {!!(appendInnerIcon || appendInnerRender) && (
-                            <div className='flex items-center gap-2'>
                                 {!!appendInnerIcon && <Icon icon={appendInnerIcon} size='md' color={accentColor} />}
                                 {appendInnerRender?.({ isFocus, isError })}
                             </div>
-                        )}
+                        </div>
                         <Menu
                             open={menuLocal}
                             position='left-bottom'
                             zIndex={2}
                             animation='fade-in'
-                            className='max-h-40 w-full rounded-md bg-white px-4 py-0 shadow-sm'
+                            className={`max-h-40 w-full rounded-md bg-white px-4 py-0 shadow-sm ${classNames.menu}`}
                         >
-                            {loading && <p className='text-title-md text-center text-slate-600'>{loadingText}</p>}
+                            {loading && (
+                                <p
+                                    className={`text-title-md text-center ${classNames.loadingText}`}
+                                    style={{
+                                        color: parsedTextColor
+                                    }}
+                                >
+                                    {loadingText}
+                                </p>
+                            )}
                             {!filteredOptions.length && (
-                                <p className='text-title-md text-center text-slate-600'>{noDataText}</p>
+                                <p
+                                    className={`text-title-md text-center ${classNames.noDataText}`}
+                                    style={{
+                                        color: parsedTextColor
+                                    }}
+                                >
+                                    {noDataText}
+                                </p>
                             )}
                             {!!(!loading && filteredOptions.length) && (
                                 <ul>
@@ -255,27 +338,38 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                         return (
                                             <li
                                                 key={option.value}
-                                                role='button'
-                                                className={`cursor-pointer bg-transparent py-4 transition-colors duration-300 first:pt-0 last:pb-0 ${styles['option-list-item']}`}
+                                                role={!option.disabled ? 'button' : undefined}
+                                                onClick={() => onOptionClickHandler(option)}
+                                                className={`cursor-pointer bg-transparent py-4 transition-colors duration-300 first:pt-0 last:pb-0 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles['option']} ${classNames.option}`}
                                                 style={{
                                                     backgroundColor: isSelected ? parsedSelectionColor : 'transparent'
                                                 }}
                                             >
                                                 {optionRender?.(option, value, isSelected) ||
                                                     (!multiple ? (
-                                                        <span className='text-body-md text-slate-700'>
+                                                        <span
+                                                            className='text-body-md'
+                                                            style={{
+                                                                color: parsedTextColor
+                                                            }}
+                                                        >
                                                             {option.label}
                                                         </span>
                                                     ) : (
                                                         <Checkbox
                                                             checked={isSelected}
                                                             value={`${option.value}`}
-                                                            onChange={onCheckboxChangeHandler}
+                                                            // onChange={()=>{}} // we don't need it because we handle it in the onOptionClickHandler
                                                             color={theme.primary}
                                                             size='md'
                                                             hideMessage
                                                         >
-                                                            <span className='text-body-md text-slate-700'>
+                                                            <span
+                                                                className='text-body-md'
+                                                                style={{
+                                                                    color: parsedTextColor
+                                                                }}
+                                                            >
                                                                 {option.label}
                                                             </span>
                                                         </Checkbox>
@@ -296,7 +390,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                 </div>
             </div>
             {!hideMessage && (
-                <FormMessage error={error} className='mt-3'>
+                <FormMessage error={error} className={`mt-3 ${classNames.message}`}>
                     {message}
                 </FormMessage>
             )}

@@ -8,6 +8,7 @@ export type Option = {
     value: number | string;
     /** default text of each option that we show in UI */
     label: string;
+    disabled?: boolean;
     [key: string]: unknown;
 };
 export type Theme = {
@@ -25,6 +26,28 @@ export type Theme = {
     selection?: string;
     /** color for error state */
     error?: string;
+};
+export type ClassNames = {
+    /** add css className to container */
+    container?: string;
+    /** add css className to label */
+    label?: string;
+    /** add css className to input */
+    input?: string;
+    /** add css className to menu */
+    menu?: string;
+    /** add css className to option */
+    option?: string;
+    /** add css className to loadingText */
+    loadingText?: string;
+    /** add css className to noDataText */
+    noDataText?: string;
+    /** add css className to value container */
+    valueContainer?: string;
+    /** add css className to value */
+    value?: string;
+    /** add css className to message */
+    message?: string;
 };
 export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | boolean = false> = {
     /** 'select' | 'autocomplete' | 'combobox' */
@@ -107,6 +130,8 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
     /** theme for coloring */
     theme?: Theme;
+    /** custom css class names for different sections of component */
+    classNames?: ClassNames;
     /** css className of container */
     className?: string;
     /** css inline style of container */
