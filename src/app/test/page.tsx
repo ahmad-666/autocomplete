@@ -1,9 +1,11 @@
+'use client';
+
 import Container from '@/components/Container';
 
 const TestPage = () => {
     return (
         <div>
-            <Container>test</Container>
+            <Container className='!overflow-visible'></Container>
         </div>
     );
 };

@@ -2,21 +2,25 @@
 
 import { type CSSProperties } from 'react';
 import useColor from '@/hooks/useColor';
+import styles from './styles.module.css';
 
-export type Size = 'sm' | 'md' | 'lg' | number;
+type Size = 'sm' | 'md' | 'lg' | number;
 type Props = {
-    animate?: boolean;
+    /** set radius of circle */
     size?: Size;
+    /** set thickness of circle */
     thickness?: number;
     color?: string;
+    /** animation duration in milliseconds */
+    duration?: number;
     className?: string;
 };
 
 export default function CircularLoader({
-    animate = true,
     size = 'md',
-    thickness = 2,
+    thickness = 4,
     color = 'primary',
+    duration = 1_000,
     className = ''
 }: Props) {
     const parsedColor = useColor(color);
@@ -24,34 +28,39 @@ export default function CircularLoader({
         let s = 0;
         switch (size) {
             case 'sm':
-                s = 18;
+                s = 20;
                 break;
             case 'md':
-                s = 25;
+                s = 40;
                 break;
             case 'lg':
-                s = 32;
+                s = 60;
                 break;
             default:
                 s = size;
         }
         return s;
     };
-    const loaderSize = getSize();
+    const calcSize = getSize();
 
     return (
         <div
-            className={`rounded-circle aspect-square border-(length:--thickness) border-solid border-t-(--color) border-r-transparent border-b-(--color) border-l-transparent bg-transparent ${animate ? 'animate-spin' : ''} ${className}`}
+            className={`inline-block ${styles.container} ${className}`}
             style={
                 {
                     '--color': parsedColor,
+                    '--radius': `${calcSize}px`,
                     '--thickness': `${thickness}px`,
-                    width: `${loaderSize}px`,
-                    height: `${loaderSize}px`
+                    '--duration': `${duration}ms`
                 } as CSSProperties
             }
-        ></div>
+        >
+            <div className={`${styles.loader}`} />
+        </div>
     );
 }
 
-//? Usage: <CircularLoader size={50} thickness={5} color='primary' />
+//? Usage:
+{
+    /* <CircularLoader size='md' thickness={2} color='sky-500' duration={1000} className='mt-20' /> */
+}

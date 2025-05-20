@@ -1,7 +1,10 @@
+'use client';
+
 import { useId, useRef, useState, useEffect, useMemo } from 'react';
 import Icon from '@/components/Icon';
-import FormLabel from '../FormLabel';
-import FormMessage from '../FormMessage';
+import FormLabel from '@/components/FormLabel';
+import FormMessage from '@/components/FormMessage';
+import CircularLoader from '@/components/CircularLoader';
 import useColor from '@/hooks/useColor';
 import colors from './colors';
 import type { AutoCompleteProps, Option } from './types';
@@ -46,7 +49,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     className = '',
     style
 }: AutoCompleteProps<Opt, Multiple>) => {
-    const randomId = useId().replace(/:/g, '').toLowerCase();
+    const randomId = useId().replace(/\W/g, '').toLowerCase();
     const finalId = inputId || randomId;
     const [searchLocal, setSearchLocal] = useState(search || '');
     const [menuLocal, setMenuLocal] = useState(menu || false);
@@ -101,7 +104,9 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         />
                         {!!(loading || clearable) && (
                             <div className='flex items-center gap-2'>
-                                {loading && <></>}
+                                {loading && (
+                                    <CircularLoader size='sm' thickness={3} color={theme.primary} duration={1000} />
+                                )}
                                 {clearable && (
                                     <button onClick={onClearHandler}>
                                         <Icon icon='mdi:close' size='md' color={accentColor} />

@@ -1,0 +1,40 @@
+@reference '../../app/globals.css';
+
+.container {
+    /* here we have --radius,--thickness,--color,--duration css variables */
+    .loader {
+        width: var(--radius);
+        height: var(--radius);
+        @apply rounded-circle relative;
+        animation: circular-loader-rotate var(--duration) linear infinite;
+        &::before {
+            content: '';
+            border-width: var(--thickness);
+            border-color: var(--color);
+            @apply rounded-circle absolute inset-0 box-border border-solid;
+            animation: circular-loader-path calc(var(--duration) * 2) linear infinite;
+        }
+    }
+}
+@keyframes circular-loader-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes circular-loader-path {
+    0% {
+        clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0);
+    }
+    25% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0);
+    }
+    50% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%);
+    }
+    75% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
+    }
+    100% {
+        clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
+    }
+}

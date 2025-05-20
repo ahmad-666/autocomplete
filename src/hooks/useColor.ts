@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import twColors from 'tailwindcss/colors';
-import paletteColors from '@/themes/mui/palette';
+// import paletteColors from '@/themes/mui/palette';
 
 type Splitter = '.' | '-';
 const useColor = (input: string, splitter?: Splitter) => {
@@ -9,8 +9,8 @@ const useColor = (input: string, splitter?: Splitter) => {
         const colorSplitter = splitter || input.includes('.') ? '.' : '-';
         const colorSplit = input.split(colorSplitter) || [];
         const [colorName, colorVariant = ''] = colorSplit;
-        //@ts-expect-error 'get palette color'
-        const paletteColor = paletteColors[colorName]?.[colorVariant || 'main'];
+        const paletteColor = undefined;
+        // const paletteColor = paletteColors[colorName]?.[colorVariant || 'main'];
         //@ts-expect-error 'get tailwind color'
         const twColor = twColors[colorName]?.[colorVariant];
         return paletteColor || twColor || input || 'transparent';
