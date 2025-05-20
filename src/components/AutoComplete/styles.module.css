@@ -1,0 +1,10 @@
+@reference '../../app/globals.css';
+
+.container {
+    /* here we have --primary-color, --outline-color, --fill-color, --text-color, --hover-color, --selection-color, --error-color css variables */
+    .option-list-item {
+        &:hover {
+            background-color: var(--hover-color);
+        }
+    }
+}

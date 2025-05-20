@@ -9,7 +9,7 @@ type Props = {
     name?: string;
     checked: boolean;
     value?: string;
-    onChange?: (checked: boolean, value?: string) => void;
+    onChange?: (checked: boolean, value: string) => void;
     size?: Size;
     color?: string;
     readOnly?: boolean;
@@ -62,7 +62,7 @@ export default function Checkbox({
     const checkboxSize = getSize();
     const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
         const { checked, value } = e.target;
-        onChange?.(checked, value);
+        onChange?.(checked, value || '');
     };
 
     return (

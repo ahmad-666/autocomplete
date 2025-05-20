@@ -1,10 +1,12 @@
-import { type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, type ChangeEvent, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
 
 export type Mode = 'select' | 'autocomplete' | 'combobox';
 export type Variant = 'filled' | 'outline';
-export type Size = 'sm' | 'md' | 'lg';
+export type Size = number | 'sm' | 'md' | 'lg';
 export type Option = {
+    /** default value of each option for selection */
     value: number | string;
+    /** default text of each option that we show in UI */
     label: string;
     [key: string]: unknown;
 };
@@ -17,6 +19,10 @@ export type Theme = {
     fill?: string;
     /** base text color */
     text?: string;
+    /** hover background color for options */
+    hover?: string;
+    /** selection background color for options */
+    selection?: string;
     /** color for error state */
     error?: string;
 };
@@ -60,7 +66,9 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     /** add loading component */
     loading?: boolean;
     /** if true we filter those options that we select from menu */
-    filterSelects?: boolean;
+    filterSelections?: boolean;
+    /** custom function to filter options */
+    filterFn: (search: string, options: Opt[]) => Opt[];
     /** icon for prependOuterIcon */
     prependOuterIcon?: string;
     /** render custom jsx for prependOuterIcon */
@@ -77,6 +85,12 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     appendOuterIcon?: string;
     /** render custom jsx for appendOuterIcon */
     appendOuterRender?: ({ isFocus, isError }: { isFocus: boolean; isError: boolean }) => ReactNode;
+    /** hide message section */
+    hideMessage?: boolean;
+    /** set error state */
+    error?: boolean;
+    /** error or hint message */
+    message?: string;
     /** control search text */
     search?: string;
     /** get latest search value */
@@ -85,12 +99,12 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     menu?: boolean;
     /** get latest menu open state value */
     onMenuChange?: (newSearch: boolean) => void;
-    /** hide message section */
-    hideMessage?: boolean;
-    /** set error state */
-    error?: boolean;
-    /** error or hint message */
-    message?: string;
+    /** handle focus event */
+    onFocus?: (e: FocusEvent<HTMLDivElement>) => void;
+    /** handle blur event */
+    onBlur?: (e: FocusEvent<HTMLDivElement>) => void;
+    /** handle key down event */
+    onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
     /** theme for coloring */
     theme?: Theme;
     /** css className of container */

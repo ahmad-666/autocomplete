@@ -5,6 +5,8 @@ const theme: Theme = {
     outline: 'slate-300',
     fill: 'slate-300',
     text: 'slate-500',
+    hover: 'sky-50',
+    selection: 'sky-100',
     error: 'red-600'
 };
 
