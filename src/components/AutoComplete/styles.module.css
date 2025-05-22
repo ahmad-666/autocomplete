@@ -1,13 +1,5 @@
 @reference '../../app/globals.css';
 
 .container {
-    /* here we have --primary-color, --outline-color, --fill-color, --text-color, --hover-color, --selection-color, --error-color css variables */
-    .option {
-        &:hover {
-            background-color: var(--hover-color);
-        }
-        &.selected {
-            background-color: var(--selection-color);
-        }
-    }
+    /* here we have --primary-color, --outline-color, --fill-color, --text-color, --hover-color, --selection-color css variables */
 }

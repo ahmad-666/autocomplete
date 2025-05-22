@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from 'react';
+import { forwardRef, type RefObject, type ForwardedRef, type CSSProperties, type ReactNode } from 'react';
 import styles from './animations.module.css';
 
 type Horizontal = 'left' | 'center' | 'right';
@@ -16,17 +16,20 @@ type Props = {
     style?: CSSProperties;
 };
 
-const Menu = ({
-    open = false,
-    position = 'left-bottom',
-    offset,
-    animation = 'fade-in',
-    zIndex = 2,
-    children,
-    onClick,
-    className,
-    style
-}: Props) => {
+const Menu = (
+    {
+        open = false,
+        position = 'left-bottom',
+        offset,
+        animation = 'fade-in',
+        zIndex = 2,
+        children,
+        onClick,
+        className,
+        style
+    }: Props,
+    ref?: ForwardedRef<HTMLDivElement>
+) => {
     const getPosition = () => {
         let left;
         let top;
@@ -66,6 +69,9 @@ const Menu = ({
 
     return (
         <div
+            ref={(node: null | HTMLDivElement) => {
+                if (node && ref) (ref as RefObject<HTMLDivElement>).current = node;
+            }}
             onClick={onClick}
             className={`shadow-full-md absolute max-h-40 max-w-full overflow-auto p-4 ${animation === 'fade-in' ? styles['fade-in'] : ''} ${className}`}
             style={{
@@ -81,7 +87,7 @@ const Menu = ({
     );
 };
 
-export default Menu;
+export default forwardRef(Menu);
 
 //? Usage:
 // const containerRef = useRef<HTMLDivElement>(null!);

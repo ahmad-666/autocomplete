@@ -1,4 +1,4 @@
-import { type CSSProperties, type ChangeEvent, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { type RefObject, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 
 export type Mode = 'select' | 'autocomplete' | 'combobox';
 export type Variant = 'filled' | 'outline';
@@ -24,8 +24,6 @@ export type Theme = {
     hover?: string;
     /** selection background color for options */
     selection?: string;
-    /** color for error state */
-    error?: string;
 };
 export type ClassNames = {
     /** add css className to container */
@@ -80,6 +78,8 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     inputName?: string;
     /** id of input element */
     inputId?: string;
+    /** autoComplete of input element */
+    autoComplete?: string;
     /** make component readOnly */
     readOnly?: boolean;
     /** make component disabled */
@@ -123,9 +123,9 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     /** get latest menu open state value */
     onMenuChange?: (newSearch: boolean) => void;
     /** handle focus event */
-    onFocus?: (e: FocusEvent<HTMLDivElement>) => void;
+    onFocus?: (containerRef: RefObject<HTMLDivElement>) => void;
     /** handle blur event */
-    onBlur?: (e: FocusEvent<HTMLDivElement>) => void;
+    onBlur?: (containerRef: RefObject<HTMLDivElement>) => void;
     /** handle key down event */
     onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
     /** theme for coloring */
