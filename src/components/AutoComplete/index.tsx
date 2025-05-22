@@ -91,8 +91,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const [searchLocal, setSearchLocal] = useState(search || ''); //control value of <input type="text" />
     const [menuLocal, setMenuLocal] = useState(menu || false); //control options menu visibility
     const [applyFilter, setApplyFilter] = useState(false); //control whether to apply filter or not ... e.g if user select an option on multiple:false we don't want to apply filter on options
-    const [hoveredOptionIdx, setHoveredOptionIdx] = useState(-1); //for store hovered option in menu
     const [focusedOptionIdx, setFocusedOptionIdx] = useState(-1); //for store focused option in menu
+    const [navigationMode, setNavigationMode] = useState<null | 'mouse' | 'keyboard'>(null); // check whether we are selecting options with mouse or keyboard
     const parsedPrimaryColor = useColor(theme.primary || colors.primary!);
     const parsedOutlineColor = useColor(theme.outline || colors.outline!);
     const parsedFillColor = useColor(theme.fill || colors.fill!);
@@ -189,8 +189,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         setSearchLocal(newSearch);
         onSearchChange?.(newSearch);
         setApplyFilter(false);
-        setHoveredOptionIdx(-1);
         setFocusedOptionIdx(-1);
+        setNavigationMode(null);
         onBlur?.(containerRef);
     }, [value, multiple, onMenuChange, onSearchChange, onBlur]);
     const onContainerClickHandler = () => {
@@ -201,14 +201,13 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         e.preventDefault();
         const key = e.key.toLowerCase();
+        setNavigationMode('keyboard');
         if (key === 'arrowup') {
-            setHoveredOptionIdx(-1);
             setFocusedOptionIdx((old) => (old - 1 >= 0 ? old - 1 : filteredOptions.length - 1));
         } else if (key === 'arrowdown') {
-            setHoveredOptionIdx(-1);
             setFocusedOptionIdx((old) => (old + 1) % filteredOptions.length);
         } else if (key === 'enter') {
-            onOptionClickHandler(filteredOptions[focusedOptionIdx || hoveredOptionIdx || -1]);
+            onOptionClickHandler(filteredOptions[focusedOptionIdx]);
         }
         onKeyDown?.(e);
     };
@@ -232,9 +231,12 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         }
     }, [menu, focusHandler, blurHandler]);
     useEffect(() => {
-        //we need to use 'instant' version instead of 'smooth' to prevent any conflicts
-        focusedOptionRef.current?.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' });
-    }, [focusedOptionIdx]);
+        //handle scrolling to focusedOptionIdx
+        if (navigationMode !== 'mouse') {
+            //we need to use 'instant' version instead of 'smooth' to prevent any conflicts
+            focusedOptionRef.current?.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' });
+        }
+    }, [focusedOptionIdx, navigationMode]);
 
     return (
         <div
@@ -400,10 +402,9 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                 </p>
                             )}
                             {!!(!loading && filteredOptions.length) && (
-                                <ul>
+                                <ul onMouseEnter={() => navigationMode !== 'mouse' && setNavigationMode('mouse')}>
                                     {filteredOptions.map((option, idx) => {
                                         const isSelected = isOptionSelected(option);
-                                        const isHovered = hoveredOptionIdx === idx;
                                         const isFocused = focusedOptionIdx === idx;
                                         return (
                                             <li
@@ -415,19 +416,17 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                 }}
                                                 role={!option.disabled ? 'button' : undefined}
                                                 onMouseEnter={() => {
-                                                    setHoveredOptionIdx(idx);
-                                                    setFocusedOptionIdx(idx);
+                                                    if (navigationMode === 'mouse') {
+                                                        setFocusedOptionIdx(idx);
+                                                    }
                                                 }}
-                                                onMouseLeave={() => {
-                                                    setHoveredOptionIdx(-1);
-                                                    setFocusedOptionIdx(-1);
-                                                }}
+                                                // we don't use onMouseLeave event here and just reset focusedOptionIdx,navigationMode states inside blurHandler
                                                 onClick={() => onOptionClickHandler(option)}
                                                 className={`cursor-pointer p-2 transition-colors duration-300 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles.option} ${classNames.option}`}
                                                 style={{
                                                     backgroundColor: isSelected
                                                         ? parsedSelectionColor
-                                                        : isHovered || isFocused
+                                                        : isFocused
                                                           ? parsedHoverColor
                                                           : 'transparent'
                                                 }}
