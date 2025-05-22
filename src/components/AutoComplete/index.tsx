@@ -402,7 +402,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                 </p>
                             )}
                             {!!(!loading && filteredOptions.length) && (
-                                <ul onMouseEnter={() => navigationMode !== 'mouse' && setNavigationMode('mouse')}>
+                                <ul onMouseMove={() => navigationMode !== 'mouse' && setNavigationMode('mouse')}>
                                     {filteredOptions.map((option, idx) => {
                                         const isSelected = isOptionSelected(option);
                                         const isFocused = focusedOptionIdx === idx;
