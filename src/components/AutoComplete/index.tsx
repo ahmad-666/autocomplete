@@ -40,6 +40,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     noDataText = 'No data found !',
     inputName,
     inputId,
+    inputRef,
     autoComplete = 'off',
     readOnly = false,
     disabled = false,
@@ -65,6 +66,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     onFocus,
     onBlur,
     onKeyDown,
+    containerRef,
     theme = colors,
     classNames = {
         container: '',
@@ -81,10 +83,10 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     className = '',
     style
 }: AutoCompleteProps<Opt, Multiple>) => {
-    const containerRef = useRef<HTMLDivElement>(null!);
-    const inputRef = useRef<HTMLInputElement>(null!);
+    const localContainerRef = useRef<HTMLDivElement>(null!);
+    const localInputRef = useRef<HTMLInputElement>(null!);
     const focusedOptionRef = useRef<HTMLLIElement>(null!);
-    const isClickedOutside = useClickOutside(containerRef);
+    const isClickedOutside = useClickOutside(localContainerRef);
     const randomId = useId().replace(/\W/g, '').toLowerCase();
     const finalId = inputId || randomId;
     const [isFocus, setIsFocus] = useState(false); //control focus state of container
@@ -171,16 +173,16 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         const selectedOptionIdx = filteredOptions.findIndex(
             (option) => option.value === (!multiple ? (value as Opt)?.value : (value as Opt[])[0]?.value)
         );
-        inputRef.current.focus();
+        localInputRef.current.focus();
         setIsFocus(true);
         setMenuLocal(true);
         onMenuChange?.(true);
-        onFocus?.(containerRef);
+        onFocus?.(localContainerRef);
         setFocusedOptionIdx(selectedOptionIdx);
     }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
     const blurHandler = useCallback(() => {
         let newSearch = '';
-        inputRef.current.blur();
+        localInputRef.current.blur();
         setIsFocus(false);
         setMenuLocal(false);
         onMenuChange?.(false);
@@ -191,7 +193,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         setApplyFilter(false);
         setFocusedOptionIdx(-1);
         setNavigationMode(null);
-        onBlur?.(containerRef);
+        onBlur?.(localContainerRef);
     }, [value, multiple, onMenuChange, onSearchChange, onBlur]);
     const onContainerClickHandler = () => {
         //always open menu on container click
@@ -199,15 +201,22 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         else if (!multiple) blurHandler();
     };
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
-        e.preventDefault();
+        const sensitiveKeys = ['arrowup', 'arrowdown', 'enter'];
         const key = e.key.toLowerCase();
         setNavigationMode('keyboard');
-        if (key === 'arrowup') {
-            setFocusedOptionIdx((old) => (old - 1 >= 0 ? old - 1 : filteredOptions.length - 1));
-        } else if (key === 'arrowdown') {
-            setFocusedOptionIdx((old) => (old + 1) % filteredOptions.length);
-        } else if (key === 'enter') {
-            onOptionClickHandler(filteredOptions[focusedOptionIdx]);
+        if (sensitiveKeys.includes(key)) {
+            e.preventDefault();
+            switch (key) {
+                case 'arrowup':
+                    setFocusedOptionIdx((old) => (old - 1 >= 0 ? old - 1 : filteredOptions.length - 1));
+                    break;
+                case 'arrowdown':
+                    setFocusedOptionIdx((old) => (old + 1) % filteredOptions.length);
+                    break;
+                case 'enter':
+                    onOptionClickHandler(filteredOptions[focusedOptionIdx]);
+                    break;
+            }
         }
         onKeyDown?.(e);
     };
@@ -216,27 +225,28 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         if (isClickedOutside) blurHandler();
     }, [isClickedOutside, blurHandler]);
     useEffect(() => {
-        //update local state for search every time 'search' prop changes
-        setSearchLocal(search || '');
-        setApplyFilter(true);
-    }, [search]);
-    useEffect(() => {
-        //update local state for menu every time 'menu' prop changes
-        if (menu) {
-            setMenuLocal(true);
-            focusHandler();
-        } else {
-            setMenuLocal(false);
-            blurHandler();
-        }
-    }, [menu, focusHandler, blurHandler]);
-    useEffect(() => {
         //handle scrolling to focusedOptionIdx
         if (navigationMode !== 'mouse') {
             //we need to use 'instant' version instead of 'smooth' to prevent any conflicts
             focusedOptionRef.current?.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' });
         }
     }, [focusedOptionIdx, navigationMode]);
+    useEffect(() => {
+        //update local state for search every time 'search' prop changes
+        setSearchLocal(search || '');
+        setApplyFilter(true);
+    }, [search]);
+    useEffect(() => {
+        //update local state for menu every time 'menu' prop changes
+        setMenuLocal(menu || false);
+        if (menu) {
+            setIsFocus(true);
+            localInputRef.current.focus();
+        } else {
+            setIsFocus(false);
+            localInputRef.current.blur();
+        }
+    }, [menu]);
 
     return (
         <div
@@ -254,7 +264,12 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
             }
         >
             <div
-                ref={containerRef}
+                ref={(node: null | HTMLDivElement) => {
+                    if (node) {
+                        localContainerRef.current = node;
+                        if (containerRef) containerRef.current = node;
+                    }
+                }}
                 onClick={onContainerClickHandler}
                 onKeyDown={onKeyDownHandler}
                 className={`outline-none ${classNames.container}`}
@@ -282,12 +297,12 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         </div>
                     )}
                     <div
-                        className={`relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md px-2 outline-solid ${isFocus ? 'outline-2' : 'outline'}`}
+                        className={`relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md border-solid px-2 ${isFocus ? 'border-2' : 'border'}`}
                         style={{
                             minHeight: multiple ? `${textfieldHeight}px` : 'initial',
                             height: !multiple ? `${textfieldHeight}px` : 'auto',
                             backgroundColor: variant === 'filled' ? parsedFillColor : 'transparent',
-                            outlineColor:
+                            borderColor:
                                 variant === 'outline'
                                     ? isFocus || isError
                                         ? parseAccentColor
@@ -339,7 +354,12 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                 </div>
                             )}
                             <input
-                                ref={inputRef}
+                                ref={(node: null | HTMLInputElement) => {
+                                    if (node) {
+                                        localInputRef.current = node;
+                                        if (inputRef) inputRef.current = node;
+                                    }
+                                }}
                                 autoComplete={autoComplete}
                                 type='text'
                                 id={finalId}
@@ -415,11 +435,9 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                     }
                                                 }}
                                                 role={!option.disabled ? 'button' : undefined}
-                                                onMouseEnter={() => {
-                                                    if (navigationMode === 'mouse') {
-                                                        setFocusedOptionIdx(idx);
-                                                    }
-                                                }}
+                                                onMouseEnter={() =>
+                                                    navigationMode === 'mouse' && setFocusedOptionIdx(idx)
+                                                }
                                                 // we don't use onMouseLeave event here and just reset focusedOptionIdx,navigationMode states inside blurHandler
                                                 onClick={() => onOptionClickHandler(option)}
                                                 className={`cursor-pointer p-2 transition-colors duration-300 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles.option} ${classNames.option}`}

@@ -78,6 +78,8 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     inputName?: string;
     /** id of input element */
     inputId?: string;
+    /** ref of input element */
+    inputRef?: RefObject<HTMLInputElement>;
     /** autoComplete of input element */
     autoComplete?: string;
     /** make component readOnly */
@@ -128,6 +130,7 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     onBlur?: (containerRef: RefObject<HTMLDivElement>) => void;
     /** handle key down event */
     onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+    containerRef?: RefObject<HTMLDivElement>;
     /** theme for coloring */
     theme?: Theme;
     /** custom css class names for different sections of component */
