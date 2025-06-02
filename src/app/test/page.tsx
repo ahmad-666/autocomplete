@@ -7,8 +7,9 @@ import AutoComplete, { type Option } from '@/components/AutoComplete';
 const options: Option[] = Array.from({ length: 50 }, (_, i) => ({ value: i + 1, label: `item-${i + 1}` }));
 
 const TestPage = () => {
-    const [val, setVal] = useState<null | Option>(null);
-    console.log('🚀 ~ TestPage ~ val:', val);
+    const [val1, setVal1] = useState<null | Option>(null);
+    const [val2, setVal2] = useState<Option[]>([]);
+    console.log('🚀 ~ TestPage ~ val:', val1);
 
     return (
         <div>
@@ -16,23 +17,15 @@ const TestPage = () => {
                 <div className='w-200'>
                     <AutoComplete
                         mode='combobox'
-                        multiple={false}
                         variant='outline'
                         size='md'
-                        value={val}
+                        value={val1}
                         options={options}
-                        onChange={(newVal) => setVal(newVal)}
+                        onChange={(newVal) => setVal1(newVal)}
                         clearable
                         placeholder='Placeholder'
                         label='Label'
                     />
-                    {/* <AutoComplete
-                        variant='outline'
-                        size='md'
-                        value={val}
-                        options={options}
-                        onChange={(newVal) => setVal(newVal)}
-                    /> */}
                 </div>
             </Container>
         </div>

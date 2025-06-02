@@ -24,14 +24,14 @@ import type { AutoCompleteProps, Option } from './types';
 export { type Option } from './types';
 import styles from './styles.module.css';
 
-const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean = false>({
+const AutoComplete = <Opt extends Option>({
     mode = 'autocomplete',
     variant = 'outline',
     size = 'md',
     value,
     onChange,
     options = [],
-    multiple = false,
+    multiple,
     valueRender,
     optionRender,
     placeholder,
@@ -82,11 +82,14 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     },
     className = '',
     style
-}: AutoCompleteProps<Opt, Multiple>) => {
+}: AutoCompleteProps<Opt>) => {
     const localContainerRef = useRef<HTMLDivElement>(null!);
     const localInputRef = useRef<HTMLInputElement>(null!);
     const focusedOptionRef = useRef<HTMLLIElement>(null!);
-    const isClickedOutside = useClickOutside(localContainerRef);
+    useClickOutside(localContainerRef, () => {
+        //we use callback version to prevent any infinite re-renders of useEffect
+        blurHandler(!multiple ? value : undefined);
+    });
     const randomId = useId().replace(/\W/g, '').toLowerCase();
     const finalId = inputId || randomId;
     const [isFocus, setIsFocus] = useState(false); //control focus state of container
@@ -109,8 +112,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     const textfieldHeight = size === 'sm' ? 32 : size === 'md' ? 40 : size === 'lg' ? 48 : 40; //height of wrapper for multiple:false and min-height of wrapper for multiple:true
     const isOptionSelected = useCallback(
         (option: Opt) => {
-            if (!multiple) return (value as Opt)?.value === option.value;
-            return !!(value as Opt[])?.find((val) => val.value === option.value);
+            if (!multiple) return value?.value === option.value;
+            return !!value.find((val) => val.value === option.value);
         },
         [value, multiple]
     );
@@ -130,7 +133,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     }, [applyFilter, options, searchLocal, filterSelections, isOptionSelected, filterFn]);
     const focusHandler = useCallback(() => {
         const selectedOptionIdx = filteredOptions.findIndex(
-            (option) => option.value === (!multiple ? (value as Opt)?.value : (value as Opt[])[0]?.value)
+            (option) => option.value === (!multiple ? value?.value : value[0]?.value)
         );
         localInputRef.current.focus();
         setIsFocus(true);
@@ -140,7 +143,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         onFocus?.(localContainerRef);
     }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
     const blurHandler = useCallback(
-        (selectedOption?: Opt) => {
+        (selectedOption?: null | Opt) => {
             localInputRef.current.blur();
             setIsFocus(false);
             setMenuLocal(false);
@@ -190,35 +193,31 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         if (!multiple) {
             newValue = option;
             blurHandler(newValue);
+            onChange?.(newValue);
         } else {
-            const isChecked = !!(value as Opt[]).find((val) => val.value === option.value);
-            if (!isChecked) newValue = [...(value as Opt[]), option];
-            else newValue = (value as Opt[]).filter((val) => val.value !== option.value);
+            const isChecked = !!value.find((val) => val.value === option.value);
+            if (!isChecked) newValue = [...value, option];
+            else newValue = value.filter((val) => val.value !== option.value);
+            onChange?.(newValue);
         }
-        //@ts-expect-error 'we manually handle it'
-        onChange?.(newValue);
     };
     const onChipCloseHandler = (chipOption: Opt) => {
         let newValue: null | Opt[];
         if (!multiple) {
             newValue = null;
+            onChange?.(newValue);
         } else {
-            newValue = (value as Opt[]).filter((val) => val.value !== chipOption.value);
+            newValue = value.filter((val) => val.value !== chipOption.value);
+            onChange?.(newValue);
         }
-        //@ts-expect-error 'we manually handle it'
-        onChange?.(newValue);
     };
     const onClearHandler = () => {
         setSearchLocal('');
         onSearchChange?.('');
         setApplyFilter(false);
-        //@ts-expect-error 'we manually handle it'
-        onChange?.(!multiple ? null : []);
+        if (!multiple) onChange?.(null);
+        else onChange?.([]);
     };
-    useEffect(() => {
-        //close menu if user clicks outside of container
-        if (isClickedOutside) blurHandler(!multiple ? (value as Opt) : undefined);
-    }, [value, multiple, blurHandler, isClickedOutside]);
     useEffect(() => {
         //handle scrolling to focusedOptionIdx
         if (navigationMode !== 'mouse') {
@@ -316,18 +315,20 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                         <div className='flex grow items-center justify-between gap-2'>
                             {!!(multiple || valueRender) && (
                                 <div className={`flex flex-wrap gap-2 ${classNames.valueContainer}`}>
-                                    {valueRender?.(value) ||
-                                        (!multiple ? (
+                                    {!multiple &&
+                                        (valueRender?.(value) || (
                                             <p
                                                 className={`text-body-md ${classNames.value}`}
                                                 style={{
                                                     color: parsedTextColor
                                                 }}
                                             >
-                                                {(value as Opt)?.label}
+                                                {value?.label}
                                             </p>
-                                        ) : (
-                                            (value as Opt[]).map((val) => (
+                                        ))}
+                                    {multiple &&
+                                        (valueRender?.(value) ||
+                                            value.map((val) => (
                                                 <div
                                                     key={val.value}
                                                     className={`text-body-md rounded-md text-white ${classNames.value}`}
@@ -344,8 +345,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                         <Icon icon='mdi:close' size='sm' color='white' />
                                                     </button>
                                                 </div>
-                                            ))
-                                        ))}
+                                            )))}
                                 </div>
                             )}
                             <input
@@ -447,8 +447,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                           : 'transparent'
                                                 }}
                                             >
-                                                {optionRender?.(option, value, isSelected) ||
-                                                    (!multiple ? (
+                                                {!multiple &&
+                                                    (optionRender?.(option, value, isSelected) || (
                                                         <span
                                                             className='text-body-md'
                                                             style={{
@@ -457,7 +457,9 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
                                                         >
                                                             {option.label}
                                                         </span>
-                                                    ) : (
+                                                    ))}
+                                                {multiple &&
+                                                    (optionRender?.(option, value, isSelected) || (
                                                         <Checkbox
                                                             checked={isSelected}
                                                             value={`${option.value}`}

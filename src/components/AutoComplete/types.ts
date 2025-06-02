@@ -47,25 +47,15 @@ export type ClassNames = {
     /** add css className to message */
     message?: string;
 };
-export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | boolean = false> = {
+export type BaseAutoCompleteProps<Opt extends Option> = {
     /** 'select' | 'autocomplete' | 'combobox' */
     mode?: Mode;
     /** 'filled' | 'outline' */
     variant?: Variant;
     /** 'sm' | 'md' | 'lg' */
     size?: Size;
-    /** value of component ... for multiple:false value is null|Option else value is Option[]  */
-    value: Multiple extends true ? Opt[] : null | Opt;
-    /** for set value prop */
-    onChange?: (newValue: Multiple extends true ? Opt[] : null | Opt) => void;
     /** options of menu */
     options: Opt[];
-    /** if multiple:false then value is null|Option else value is Option[] */
-    multiple?: Multiple;
-    /** render custom jsx for value section */
-    valueRender?: (value: Multiple extends true ? Opt[] : null | Opt) => ReactNode;
-    /** render custom jsx for each option */
-    optionRender?: (option: Opt, value: Multiple extends true ? Opt[] : null | Opt, isSelected: boolean) => void;
     /** placeholder */
     placeholder?: string;
     /** label */
@@ -140,3 +130,29 @@ export type AutoCompleteProps<Opt extends Option, Multiple extends undefined | b
     /** css inline style of container */
     style?: CSSProperties;
 };
+export type SingleAutoCompleteProps<Opt extends Option> = {
+    /** value of component ... for multiple:false value is null|Option else value is Option[]  */
+    value: null | Opt;
+    /** for set value prop */
+    onChange?: (newValue: null | Opt) => void;
+    /** if multiple:false then value is null|Option else value is Option[] */
+    multiple?: false;
+    /** render custom jsx for value section */
+    valueRender?: (value: null | Opt) => ReactNode;
+    /** render custom jsx for each option */
+    optionRender?: (option: Opt, value: null | Opt, isSelected: boolean) => void;
+};
+export type MultipleAutoCompleteProps<Opt extends Option> = {
+    /** value of component ... for multiple:false value is null|Option else value is Option[]  */
+    value: Opt[];
+    /** for set value prop */
+    onChange?: (newValue: Opt[]) => void;
+    /** if multiple:false then value is null|Option else value is Option[] */
+    multiple: true;
+    /** render custom jsx for value section */
+    valueRender?: (value: Opt[]) => ReactNode;
+    /** render custom jsx for each option */
+    optionRender?: (option: Opt, value: Opt[], isSelected: boolean) => void;
+};
+export type AutoCompleteProps<Opt extends Option> = BaseAutoCompleteProps<Opt> &
+    (SingleAutoCompleteProps<Opt> | MultipleAutoCompleteProps<Opt>);
