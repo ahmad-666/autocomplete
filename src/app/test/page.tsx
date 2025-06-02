@@ -8,6 +8,7 @@ const options: Option[] = Array.from({ length: 50 }, (_, i) => ({ value: i + 1, 
 
 const TestPage = () => {
     const [val, setVal] = useState<null | Option>(null);
+    console.log('🚀 ~ TestPage ~ val:', val);
 
     return (
         <div>

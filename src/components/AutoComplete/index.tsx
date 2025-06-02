@@ -139,16 +139,21 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         setFocusedOptionIdx(selectedOptionIdx);
         onFocus?.(localContainerRef);
     }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
-    const blurHandler = useCallback(() => {
-        localInputRef.current.blur();
-        setIsFocus(false);
-        setMenuLocal(false);
-        onMenuChange?.(false);
-        setApplyFilter(false);
-        setFocusedOptionIdx(-1);
-        setNavigationMode(null);
-        onBlur?.(localContainerRef);
-    }, [onMenuChange, onBlur]);
+    const blurHandler = useCallback(
+        (selectedOption?: Opt) => {
+            localInputRef.current.blur();
+            setIsFocus(false);
+            setMenuLocal(false);
+            onMenuChange?.(false);
+            setSearchLocal(selectedOption?.label || '');
+            onSearchChange?.(selectedOption?.label || '');
+            setApplyFilter(false);
+            setFocusedOptionIdx(-1);
+            setNavigationMode(null);
+            onBlur?.(localContainerRef);
+        },
+        [onMenuChange, onSearchChange, onBlur]
+    );
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         const sensitiveKeys = ['arrowup', 'arrowdown', 'enter'];
         const key = e.key.toLowerCase();
@@ -184,9 +189,7 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
         let newValue: Opt | Opt[];
         if (!multiple) {
             newValue = option;
-            setSearchLocal(option.label);
-            onSearchChange?.(option.label);
-            blurHandler();
+            blurHandler(newValue);
         } else {
             const isChecked = !!(value as Opt[]).find((val) => val.value === option.value);
             if (!isChecked) newValue = [...(value as Opt[]), option];
@@ -214,8 +217,8 @@ const AutoComplete = <Opt extends Option, Multiple extends undefined | boolean =
     };
     useEffect(() => {
         //close menu if user clicks outside of container
-        if (isClickedOutside) blurHandler();
-    }, [isClickedOutside, blurHandler]);
+        if (isClickedOutside) blurHandler(!multiple ? (value as Opt) : undefined);
+    }, [value, multiple, blurHandler, isClickedOutside]);
     useEffect(() => {
         //handle scrolling to focusedOptionIdx
         if (navigationMode !== 'mouse') {
