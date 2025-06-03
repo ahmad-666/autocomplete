@@ -16,7 +16,7 @@ const TestPage = () => {
     const [val1, setVal1] = useState<null | CustomOption>(null);
     const [val2, setVal2] = useState<CustomOption[]>([]);
     // console.log('🚀 ~ TestPage ~ val1:', val1);
-    console.log('🚀 ~ TestPage ~ val2:', val2);
+    // console.log('🚀 ~ TestPage ~ val2:', val2);
 
     return (
         <div>

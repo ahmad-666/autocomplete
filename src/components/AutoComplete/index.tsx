@@ -20,7 +20,7 @@ import Checkbox from '@/components/Checkbox';
 import useColor from '@/hooks/useColor';
 import useClickOutside from '@/hooks/useClickOutside';
 import colors from './colors';
-import type { BlurReason, Option, AutoCompleteProps } from './types';
+import type { BlurReason, SelectReason, Option, AutoCompleteProps } from './types';
 export type { Option } from './types';
 import styles from './styles.module.css';
 
@@ -97,7 +97,7 @@ const AutoComplete = <Opt extends Option>({
     const [menuLocal, setMenuLocal] = useState(menu || false); //control options menu visibility
     const [applyFilter, setApplyFilter] = useState(false); //control whether to apply filter or not ... e.g if user select an option on multiple:false we don't want to apply filter on options
     const [focusedOptionIdx, setFocusedOptionIdx] = useState(-1); //for store focused option in menu
-    const [navigationMode, setNavigationMode] = useState<null | 'mouse' | 'keyboard'>(null); // check whether we are selecting options with mouse or keyboard
+    const [navigationMode, setNavigationMode] = useState<'mouse' | 'keyboard'>('mouse'); // check whether we are selecting options with mouse or keyboard
     const parsedPrimaryColor = useColor(theme.primary || colors.primary!);
     const parsedOutlineColor = useColor(theme.outline || colors.outline!);
     const parsedFillColor = useColor(theme.fill || colors.fill!);
@@ -131,6 +131,19 @@ const AutoComplete = <Opt extends Option>({
             }
         }
     }, [applyFilter, options, searchLocal, filterSelections, isOptionSelected, filterFn]);
+    const comboboxHandler = useCallback(() => {
+        const optionalOption = searchLocal ? ({ value: searchLocal, label: searchLocal } as Opt) : null;
+        const targetOption = options.find((option) => option.label === optionalOption?.label);
+        const newSearch = !multiple ? (targetOption ? targetOption.label : optionalOption?.label) : '';
+        if (!multiple) onChange?.(targetOption || optionalOption || null);
+        else if (optionalOption) {
+            const newValue = [...value, targetOption || optionalOption || null].filter((opt) => !!opt);
+            const filteredNewValue = Array.from(new Map(newValue.map((opt) => [opt.value, opt])).values());
+            onChange?.(filteredNewValue);
+        }
+        setSearchLocal(newSearch || '');
+        onSearchChange?.(newSearch || '');
+    }, [value, multiple, options, searchLocal, onSearchChange, onChange]);
     const focusHandler = useCallback(() => {
         const selectedOptionIdx = filteredOptions.findIndex(
             (option) => option.value === (!multiple ? value?.value : value[0]?.value)
@@ -144,32 +157,21 @@ const AutoComplete = <Opt extends Option>({
     }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
     const blurHandler = useCallback(
         (selectedOption: null | Opt, reason: BlurReason) => {
-            let newSearch;
             localInputRef.current.blur();
             setIsFocus(false);
             setMenuLocal(false);
             onMenuChange?.(false);
-            if (mode === 'combobox' && reason === 'click-outside') {
-                const optionalOption = searchLocal ? ({ value: searchLocal, label: searchLocal } as Opt) : null;
-                const targetOption = options.find((option) => option.label === optionalOption?.label);
-                newSearch = !multiple ? (targetOption ? targetOption.label : optionalOption?.label) : '';
-                if (!multiple) onChange?.(targetOption || optionalOption || null);
-                else if (optionalOption) {
-                    const newValue = [...value, targetOption || optionalOption || null].filter((opt) => !!opt);
-                    const filteredNewValue = Array.from(new Map(newValue.map((opt) => [opt.value, opt])).values());
-                    onChange?.(filteredNewValue);
-                }
-            } else {
-                newSearch = selectedOption?.label;
-            }
-            setSearchLocal(newSearch || '');
-            onSearchChange?.(newSearch || '');
             setApplyFilter(false);
             setFocusedOptionIdx(-1);
-            setNavigationMode(null);
+            setNavigationMode('mouse');
+            if (mode === 'combobox' && reason === 'click-outside') comboboxHandler();
+            else {
+                setSearchLocal(selectedOption?.label || '');
+                onSearchChange?.(selectedOption?.label || '');
+            }
             onBlur?.(localContainerRef);
         },
-        [value, multiple, mode, searchLocal, options, onMenuChange, onSearchChange, onBlur, onChange]
+        [mode, comboboxHandler, onMenuChange, onSearchChange, onBlur]
     );
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         const sensitiveKeys = ['arrowup', 'arrowdown', 'enter'];
@@ -185,7 +187,9 @@ const AutoComplete = <Opt extends Option>({
                     setFocusedOptionIdx((old) => (old + 1) % filteredOptions.length);
                     break;
                 case 'enter':
-                    onOptionSelect(filteredOptions[focusedOptionIdx]);
+                    const focusedOption = filteredOptions[focusedOptionIdx];
+                    if (focusedOption) onOptionSelect(focusedOption, 'enter-key');
+                    else comboboxHandler();
                     break;
             }
         }
@@ -201,7 +205,7 @@ const AutoComplete = <Opt extends Option>({
         onSearchChange?.(newVal);
         setApplyFilter(true);
     };
-    const onOptionSelect = (option: Opt) => {
+    const onOptionSelect = (option: null | Opt, reason: SelectReason) => {
         if (!option) return null;
         let newValue: Opt | Opt[];
         if (!multiple) {
@@ -233,11 +237,8 @@ const AutoComplete = <Opt extends Option>({
     };
     useEffect(() => {
         //handle scrolling to focusedOptionIdx
-        if (navigationMode !== 'mouse') {
-            //we need to use 'instant' version instead of 'smooth' to prevent any conflicts
-            focusedOptionRef.current?.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' });
-        }
-    }, [focusedOptionIdx, navigationMode]);
+        focusedOptionRef.current?.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' }); //use 'instant' version to prevent any conflicts
+    }, [focusedOptionIdx]);
     useEffect(() => {
         //update local state for search every time 'search' prop changes
         setSearchLocal(search || '');
@@ -344,7 +345,7 @@ const AutoComplete = <Opt extends Option>({
                                             value.map((val) => (
                                                 <div
                                                     key={val.value}
-                                                    className={`text-label-md flex items-center gap-2 rounded-full px-2 py-1 text-white ${classNames.value}`}
+                                                    className={`text-label-md flex max-w-full items-center gap-2 rounded-full px-2 py-1 text-white ${classNames.value}`}
                                                     style={{
                                                         backgroundColor: parsedPrimaryColor
                                                     }}
@@ -394,7 +395,14 @@ const AutoComplete = <Opt extends Option>({
                                 <CircularLoader size={22} thickness={2} color={theme.primary} duration={1000} />
                             )}
                             {clearable && hasValue && (
-                                <button type='button' onClick={onClearHandler} className='inline-flex cursor-pointer'>
+                                <button
+                                    type='button'
+                                    onClick={(e) => {
+                                        e.stopPropagation(); //for prevent container onClick from firing
+                                        onClearHandler();
+                                    }}
+                                    className='inline-flex cursor-pointer'
+                                >
                                     <Icon icon='mdi:close' size={iconSize} color={accentColor} />
                                 </button>
                             )}
@@ -430,7 +438,7 @@ const AutoComplete = <Opt extends Option>({
                                 </p>
                             )}
                             {!!(!loading && filteredOptions.length) && (
-                                <ul onMouseMove={() => navigationMode !== 'mouse' && setNavigationMode('mouse')}>
+                                <ul onMouseMove={() => setNavigationMode('mouse')}>
                                     {filteredOptions.map((option, idx) => {
                                         const isSelected = isOptionSelected(option);
                                         const isFocused = focusedOptionIdx === idx;
@@ -449,7 +457,7 @@ const AutoComplete = <Opt extends Option>({
                                                 // we don't use onMouseLeave event here and just reset focusedOptionIdx,navigationMode states inside blurHandler
                                                 onClick={(e) => {
                                                     e.stopPropagation(); //not propagate to parent element so we don't face conflicts with onClick of container
-                                                    onOptionSelect(option);
+                                                    onOptionSelect(option, 'option-click');
                                                 }}
                                                 className={`cursor-pointer p-2 transition-colors duration-300 ${option.disabled ? 'pointer-events-none opacity-50' : ''} ${styles.option} ${classNames.option}`}
                                                 style={{

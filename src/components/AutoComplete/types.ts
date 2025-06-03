@@ -4,6 +4,7 @@ export type Mode = 'select' | 'autocomplete' | 'combobox';
 export type Variant = 'filled' | 'outline';
 export type Size = number | 'sm' | 'md' | 'lg';
 export type BlurReason = 'click-outside' | 'option-select';
+export type SelectReason = 'option-click' | 'enter-key';
 export type Option = {
     /** default value of each option for selection */
     value: number | string;
