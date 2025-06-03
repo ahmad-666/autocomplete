@@ -46,13 +46,13 @@ export default function Checkbox({
         let s;
         switch (size) {
             case 'sm':
-                s = 15;
+                s = 14;
                 break;
             case 'md':
-                s = 20;
+                s = 18;
                 break;
             case 'lg':
-                s = 25;
+                s = 22;
                 break;
             default:
                 s = size;

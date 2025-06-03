@@ -3,6 +3,7 @@ import { type RefObject, type CSSProperties, type KeyboardEvent, type ReactNode 
 export type Mode = 'select' | 'autocomplete' | 'combobox';
 export type Variant = 'filled' | 'outline';
 export type Size = number | 'sm' | 'md' | 'lg';
+export type BlurReason = 'click-outside' | 'option-select';
 export type Option = {
     /** default value of each option for selection */
     value: number | string;
@@ -156,3 +157,11 @@ export type MultipleAutoCompleteProps<Opt extends Option> = {
 };
 export type AutoCompleteProps<Opt extends Option> = BaseAutoCompleteProps<Opt> &
     (SingleAutoCompleteProps<Opt> | MultipleAutoCompleteProps<Opt>);
+//? We use union types to allow both single and multiple props with generic options type
+//? If we used bellow type then it would be valid on each AutoComplete component usage but inside AutoComplete component definition we should used type assertion each time we use 'value','onChange',... props
+// type AutoCompleteProps<Opt extends Option, Multiple extends undefined | boolean = false> = {
+//     value: Multiple extends true ? Opt[] : null | Opt;
+//     onChange?: (newValue: Multiple extends true ? Opt[] : null | Opt) => void;
+//     options: Opt[];
+//     multiple?: Multiple;
+// };

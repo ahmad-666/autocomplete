@@ -4,17 +4,24 @@ import { useEffect, useRef, useState } from 'react';
 import Container from '@/components/Container';
 import AutoComplete, { type Option } from '@/components/AutoComplete';
 
-const options: Option[] = Array.from({ length: 50 }, (_, i) => ({ value: i + 1, label: `item-${i + 1}` }));
+type CustomOption = Option & { desc: string };
+
+const options: CustomOption[] = Array.from({ length: 50 }, (_, i) => ({
+    value: i + 1,
+    label: `item-${i + 1}`,
+    desc: 'desc'
+}));
 
 const TestPage = () => {
-    const [val1, setVal1] = useState<null | Option>(null);
-    const [val2, setVal2] = useState<Option[]>([]);
-    console.log('🚀 ~ TestPage ~ val:', val1);
+    const [val1, setVal1] = useState<null | CustomOption>(null);
+    const [val2, setVal2] = useState<CustomOption[]>([]);
+    // console.log('🚀 ~ TestPage ~ val1:', val1);
+    console.log('🚀 ~ TestPage ~ val2:', val2);
 
     return (
         <div>
             <Container className='!overflow-visible'>
-                <div className='w-200'>
+                <div className='w-200 max-w-full'>
                     <AutoComplete
                         mode='combobox'
                         variant='outline'
@@ -22,6 +29,18 @@ const TestPage = () => {
                         value={val1}
                         options={options}
                         onChange={(newVal) => setVal1(newVal)}
+                        clearable
+                        placeholder='Placeholder'
+                        label='Label'
+                    />
+                    <AutoComplete
+                        mode='combobox'
+                        variant='outline'
+                        multiple
+                        size='md'
+                        value={val2}
+                        options={options}
+                        onChange={(newVal) => setVal2(newVal)}
                         clearable
                         placeholder='Placeholder'
                         label='Label'

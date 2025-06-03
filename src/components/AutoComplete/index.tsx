@@ -20,8 +20,8 @@ import Checkbox from '@/components/Checkbox';
 import useColor from '@/hooks/useColor';
 import useClickOutside from '@/hooks/useClickOutside';
 import colors from './colors';
-import type { AutoCompleteProps, Option } from './types';
-export { type Option } from './types';
+import type { BlurReason, Option, AutoCompleteProps } from './types';
+export type { Option } from './types';
 import styles from './styles.module.css';
 
 const AutoComplete = <Opt extends Option>({
@@ -88,7 +88,7 @@ const AutoComplete = <Opt extends Option>({
     const focusedOptionRef = useRef<HTMLLIElement>(null!);
     useClickOutside(localContainerRef, () => {
         //we use callback version to prevent any infinite re-renders of useEffect
-        blurHandler(!multiple ? value : undefined);
+        blurHandler(!multiple ? value : null, 'click-outside');
     });
     const randomId = useId().replace(/\W/g, '').toLowerCase();
     const finalId = inputId || randomId;
@@ -143,19 +143,33 @@ const AutoComplete = <Opt extends Option>({
         onFocus?.(localContainerRef);
     }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
     const blurHandler = useCallback(
-        (selectedOption?: null | Opt) => {
+        (selectedOption: null | Opt, reason: BlurReason) => {
+            let newSearch;
             localInputRef.current.blur();
             setIsFocus(false);
             setMenuLocal(false);
             onMenuChange?.(false);
-            setSearchLocal(selectedOption?.label || '');
-            onSearchChange?.(selectedOption?.label || '');
+            if (mode === 'combobox' && reason === 'click-outside') {
+                const optionalOption = searchLocal ? ({ value: searchLocal, label: searchLocal } as Opt) : null;
+                const targetOption = options.find((option) => option.label === optionalOption?.label);
+                newSearch = !multiple ? (targetOption ? targetOption.label : optionalOption?.label) : '';
+                if (!multiple) onChange?.(targetOption || optionalOption || null);
+                else if (optionalOption) {
+                    const newValue = [...value, targetOption || optionalOption || null].filter((opt) => !!opt);
+                    const filteredNewValue = Array.from(new Map(newValue.map((opt) => [opt.value, opt])).values());
+                    onChange?.(filteredNewValue);
+                }
+            } else {
+                newSearch = selectedOption?.label;
+            }
+            setSearchLocal(newSearch || '');
+            onSearchChange?.(newSearch || '');
             setApplyFilter(false);
             setFocusedOptionIdx(-1);
             setNavigationMode(null);
             onBlur?.(localContainerRef);
         },
-        [onMenuChange, onSearchChange, onBlur]
+        [value, multiple, mode, searchLocal, options, onMenuChange, onSearchChange, onBlur, onChange]
     );
     const onKeyDownHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         const sensitiveKeys = ['arrowup', 'arrowdown', 'enter'];
@@ -192,12 +206,11 @@ const AutoComplete = <Opt extends Option>({
         let newValue: Opt | Opt[];
         if (!multiple) {
             newValue = option;
-            blurHandler(newValue);
+            blurHandler(newValue, 'option-select');
             onChange?.(newValue);
         } else {
-            const isChecked = !!value.find((val) => val.value === option.value);
-            if (!isChecked) newValue = [...value, option];
-            else newValue = value.filter((val) => val.value !== option.value);
+            const isSelected = isOptionSelected(option);
+            newValue = !isSelected ? [...value, option] : value.filter((val) => val.value !== option.value);
             onChange?.(newValue);
         }
     };
@@ -291,7 +304,7 @@ const AutoComplete = <Opt extends Option>({
                         </div>
                     )}
                     <div
-                        className={`relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md border-solid px-2 ${isFocus ? 'border-2' : 'border'}`}
+                        className={`relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md border-solid p-2 ${isFocus ? 'border-2' : 'border'}`}
                         style={{
                             minHeight: multiple ? `${textfieldHeight}px` : 'initial',
                             height: !multiple ? `${textfieldHeight}px` : 'auto',
@@ -312,9 +325,9 @@ const AutoComplete = <Opt extends Option>({
                                 )}
                             </div>
                         )}
-                        <div className='flex grow items-center justify-between gap-2'>
+                        <div className='flex grow flex-wrap items-center justify-between gap-2'>
                             {!!(multiple || valueRender) && (
-                                <div className={`flex flex-wrap gap-2 ${classNames.valueContainer}`}>
+                                <div className={`flex flex-wrap gap-1 ${classNames.valueContainer}`}>
                                     {!multiple &&
                                         (valueRender?.(value) || (
                                             <p
@@ -331,7 +344,7 @@ const AutoComplete = <Opt extends Option>({
                                             value.map((val) => (
                                                 <div
                                                     key={val.value}
-                                                    className={`text-body-md rounded-md text-white ${classNames.value}`}
+                                                    className={`text-label-md flex items-center gap-2 rounded-full px-2 py-1 text-white ${classNames.value}`}
                                                     style={{
                                                         backgroundColor: parsedPrimaryColor
                                                     }}
@@ -340,9 +353,9 @@ const AutoComplete = <Opt extends Option>({
                                                     <button
                                                         type='button'
                                                         onClick={() => onChipCloseHandler(val)}
-                                                        className='ml-2'
+                                                        className='cursor-pointer'
                                                     >
-                                                        <Icon icon='mdi:close' size='sm' color='white' />
+                                                        <Icon icon='mdi:close' size={16} color='white' />
                                                     </button>
                                                 </div>
                                             )))}
@@ -364,7 +377,7 @@ const AutoComplete = <Opt extends Option>({
                                 readOnly={readOnly || mode === 'select'}
                                 disabled={disabled}
                                 placeholder={placeholder}
-                                className={`text-body-md placeholder:text-label-md inline-block w-0 appearance-none border-none outline-none placeholder:text-slate-300 ${!multiple && !isFocus && valueRender ? 'pointer-events-none opacity-0' : 'grow'} ${classNames.input}`}
+                                className={`text-body-md placeholder:text-label-md inline-block w-0 min-w-25 appearance-none border-none outline-none placeholder:text-slate-300 ${!multiple && !isFocus && valueRender ? 'pointer-events-none opacity-0' : 'grow'} ${classNames.input}`}
                                 style={{
                                     color: parsedTextColor
                                 }}
@@ -394,7 +407,7 @@ const AutoComplete = <Opt extends Option>({
                             zIndex={2}
                             animation='fade-in'
                             offset={{ y: 5 }}
-                            className={`shadow-full-md max-h-56 w-full overflow-auto rounded-md bg-white !p-0 ${styles.menu} ${classNames.menu}`}
+                            className={`shadow-full-md max-h-53 w-full overflow-auto rounded-md bg-white !p-0 ${styles.menu} ${classNames.menu}`}
                         >
                             {loading && (
                                 <p
@@ -444,7 +457,11 @@ const AutoComplete = <Opt extends Option>({
                                                         ? parsedSelectionColor
                                                         : isFocused
                                                           ? parsedHoverColor
-                                                          : 'transparent'
+                                                          : 'transparent',
+                                                    border: '1px solid',
+                                                    borderColor: isFocused
+                                                        ? `color-mix(in srgb, ${parsedPrimaryColor}, white 75%)`
+                                                        : 'transparent'
                                                 }}
                                             >
                                                 {!multiple &&
@@ -466,7 +483,9 @@ const AutoComplete = <Opt extends Option>({
                                                             // onChange={()=>{}} // we don't need it because we handle it in the onOptionSelect
                                                             color={theme.primary}
                                                             size='md'
+                                                            readOnly //add this to prevent checkbox from being checked when clicked
                                                             hideMessage
+                                                            className='!flex'
                                                         >
                                                             <span
                                                                 className='text-body-md'
