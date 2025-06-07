@@ -6,7 +6,8 @@ const theme: Theme = {
     fill: 'slate-200',
     text: 'slate-500',
     hover: 'sky-50',
-    selection: 'sky-100'
+    selection: 'sky-100',
+    error: 'red-600'
 };
 
 export default theme;

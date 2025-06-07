@@ -27,6 +27,8 @@ export type Theme = {
     hover?: string;
     /** selection background color for options */
     selection?: string;
+    /** error color */
+    error?: string;
 };
 export type ClassNames = {
     /** add css className to container */
@@ -89,6 +91,10 @@ export type BaseAutoCompleteProps<Opt extends Option> = {
     filterSelections?: boolean;
     /** custom function to filter options */
     filterFn?: (search: string, options: Opt[]) => Opt[];
+    /** render custom jsx for value section */
+    valueRender?: (valueOption: null | Opt) => ReactNode;
+    /** render custom jsx for each option */
+    optionRender?: (option: Opt, isSelected: boolean) => void;
     /** icon for prependOuterIcon */
     prependOuterIcon?: string;
     /** render custom jsx for prependOuterIcon */
@@ -142,10 +148,6 @@ export type SingleAutoCompleteProps<Opt extends Option> = {
     onChange?: (newValue: null | Opt) => void;
     /** if multiple:false then value is null|Option else value is Option[] */
     multiple?: false;
-    /** render custom jsx for value section */
-    valueRender?: (value: null | Opt) => ReactNode;
-    /** render custom jsx for each option */
-    optionRender?: (option: Opt, value: null | Opt, isSelected: boolean) => void;
 };
 export type MultipleAutoCompleteProps<Opt extends Option> = {
     /** value of component ... for multiple:false value is null|Option else value is Option[]  */
@@ -154,10 +156,6 @@ export type MultipleAutoCompleteProps<Opt extends Option> = {
     onChange?: (newValue: Opt[]) => void;
     /** if multiple:false then value is null|Option else value is Option[] */
     multiple: true;
-    /** render custom jsx for value section */
-    valueRender?: (value: Opt[]) => ReactNode;
-    /** render custom jsx for each option */
-    optionRender?: (option: Opt, value: Opt[], isSelected: boolean) => void;
 };
 export type AutoCompleteProps<Opt extends Option> = BaseAutoCompleteProps<Opt> &
     (SingleAutoCompleteProps<Opt> | MultipleAutoCompleteProps<Opt>);

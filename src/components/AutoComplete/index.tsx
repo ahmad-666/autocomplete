@@ -105,9 +105,10 @@ const AutoComplete = <Opt extends Option>({
     const parsedTextColor = useColor(theme.text || colors.text!);
     const parsedHoverColor = useColor(theme.hover || colors.hover!);
     const parsedSelectionColor = useColor(theme.selection || colors.selection!);
+    const parsedErrorColor = useColor(theme.error || colors.error!);
     const hasValue = !!(multiple ? value?.length : value);
     const isError = !!error;
-    const accentColor = isError ? 'red-600' : isFocus ? theme.primary : theme.text;
+    const accentColor = isError ? parsedErrorColor : isFocus ? parsedPrimaryColor : parsedTextColor;
     const parseAccentColor = useColor(accentColor!);
     const textfieldHeight = size === 'sm' ? 32 : size === 'md' ? 40 : size === 'lg' ? 48 : 40; //height of wrapper for multiple:false and min-height of wrapper for multiple:true
     const iconSize = size === 'lg' ? 28 : size === 'sm' ? 20 : 24; //size of icons and circular loader except chevron,close icon
@@ -138,27 +139,28 @@ const AutoComplete = <Opt extends Option>({
     const comboboxHandler = useCallback(() => {
         const optionalOption = searchLocal ? ({ value: searchLocal, label: searchLocal } as Opt) : null;
         const targetOption = options.find((option) => option.label === optionalOption?.label);
-        const newSearch = !multiple ? (targetOption ? targetOption.label : optionalOption?.label) : '';
-        if (!multiple) onChange?.(targetOption || optionalOption || null);
-        else if (optionalOption) {
-            const newValue = [...value, targetOption || optionalOption || null].filter((opt) => !!opt);
-            const filteredNewValue = Array.from(new Map(newValue.map((opt) => [opt.value, opt])).values());
-            onChange?.(filteredNewValue);
+        if (targetOption || optionalOption) {
+            if (!multiple) onChange?.(targetOption || optionalOption);
+            else {
+                const newValue = [...value, targetOption || optionalOption] as Opt[];
+                const filteredNewValue = Array.from(new Map(newValue.map((opt) => [opt.value, opt])).values());
+                onChange?.(filteredNewValue);
+            }
         }
-        setSearchLocal(newSearch || '');
-        onSearchChange?.(newSearch || '');
-    }, [value, multiple, options, searchLocal, onSearchChange, onChange]);
+    }, [value, multiple, options, searchLocal, onChange]);
     const focusHandler = useCallback(() => {
-        const selectedOptionIdx = filteredOptions.findIndex(
-            (option) => option.value === (!multiple ? value?.value : value[0]?.value)
+        const firstSelectedOption = filteredOptions.find((option) => isOptionSelected(option));
+        const firstSelectedOptionIdx = filteredOptions.findIndex(
+            (option) => option.value === firstSelectedOption?.value
         );
         localInputRef.current.focus();
+        localInputRef.current.select();
         setIsFocus(true);
         setMenuLocal(true);
         onMenuChange?.(true);
-        setFocusedOptionIdx(selectedOptionIdx);
+        setFocusedOptionIdx(firstSelectedOptionIdx);
         onFocus?.(localContainerRef);
-    }, [value, multiple, filteredOptions, onFocus, onMenuChange]);
+    }, [filteredOptions, isOptionSelected, onFocus, onMenuChange]);
     const blurHandler = useCallback(
         (selectedOption: null | Opt, reason: BlurReason) => {
             localInputRef.current.blur();
@@ -169,10 +171,8 @@ const AutoComplete = <Opt extends Option>({
             setFocusedOptionIdx(-1);
             setNavigationMode('mouse');
             if (mode === 'combobox' && reason === 'click-outside') comboboxHandler();
-            else {
-                setSearchLocal(selectedOption?.label || '');
-                onSearchChange?.(selectedOption?.label || '');
-            }
+            setSearchLocal('');
+            onSearchChange?.('');
             onBlur?.(localContainerRef);
         },
         [mode, comboboxHandler, onMenuChange, onSearchChange, onBlur]
@@ -193,7 +193,11 @@ const AutoComplete = <Opt extends Option>({
                 case 'enter':
                     const focusedOption = filteredOptions[focusedOptionIdx];
                     if (focusedOption) onOptionSelect(focusedOption, 'enter-key');
-                    else comboboxHandler();
+                    else if (mode === 'combobox') comboboxHandler();
+                    if (!multiple || !focusedOption) {
+                        setSearchLocal('');
+                        onSearchChange?.('');
+                    }
                     break;
             }
         }
@@ -299,7 +303,7 @@ const AutoComplete = <Opt extends Option>({
                         </div>
                     )}
                     <div
-                        className='relative flex grow cursor-text items-center gap-2 overflow-visible py-2 ps-4 pe-3'
+                        className='relative flex grow cursor-text items-center gap-2 overflow-visible rounded-md py-2 ps-4 pe-3'
                         style={{
                             minHeight: multiple ? `${textfieldHeight}px` : 'initial',
                             height: !multiple ? `${textfieldHeight}px` : 'auto',
@@ -314,7 +318,7 @@ const AutoComplete = <Opt extends Option>({
                                 )}
                             </div>
                         )}
-                        <div className='flex grow flex-wrap items-center justify-between gap-2'>
+                        <div className='flex grow flex-wrap items-center gap-1'>
                             {/* if multiple:false and we have value then first check if we have valueRenderer use it else use simple <p> tag with  */}
                             {!!(!multiple && value) &&
                                 (valueRender?.(value) || (
@@ -327,30 +331,26 @@ const AutoComplete = <Opt extends Option>({
                                         {value?.label}
                                     </p>
                                 ))}
-                            {/* if multiple:true and we have value then first check if we have valueRenderer use it else loop through each value and create a chip */}
-                            {!!(multiple && value.length) && (
-                                <ul className={`flex flex-wrap gap-1 ${classNames.valueContainer}`}>
-                                    {valueRender?.(value) ||
-                                        value.map((val) => (
-                                            <li
-                                                key={val.value}
-                                                className={`text-label-lg flex max-w-full items-center gap-2 rounded-full px-2 py-1 text-white ${classNames.value}`}
-                                                style={{
-                                                    backgroundColor: parsedPrimaryColor
-                                                }}
-                                            >
-                                                {val.label}
-                                                <button
-                                                    type='button'
-                                                    onClick={() => onChipCloseHandler(val)}
-                                                    className='cursor-pointer'
-                                                >
-                                                    <Icon icon='mdi:close' color='white' size={16} />
-                                                </button>
-                                            </li>
-                                        ))}
-                                </ul>
-                            )}
+                            {/* if multiple:true and we have value then loop through values and first check if we have valueRenderer use it else manually create a chip */}
+                            {!!(multiple && value.length) &&
+                                value.map((val) => (
+                                    <div
+                                        key={val.value}
+                                        className={`text-label-lg flex max-w-full items-center gap-2 rounded-full px-2 py-1 text-white ${classNames.value}`}
+                                        style={{
+                                            backgroundColor: parsedPrimaryColor
+                                        }}
+                                    >
+                                        {valueRender?.(val) || val.label}
+                                        <button
+                                            type='button'
+                                            onClick={() => onChipCloseHandler(val)}
+                                            className='cursor-pointer'
+                                        >
+                                            <Icon icon='mdi:close' color='white' size={16} />
+                                        </button>
+                                    </div>
+                                ))}
                             <input
                                 ref={(node: null | HTMLInputElement) => {
                                     if (node) {
@@ -367,7 +367,7 @@ const AutoComplete = <Opt extends Option>({
                                 readOnly={readOnly || mode === 'select'}
                                 disabled={disabled}
                                 placeholder={placeholder}
-                                className={`text-body-md placeholder:text-label-lg inline-block h-6 min-w-25 appearance-none border-none outline-none placeholder:text-slate-300 ${!multiple && !isFocus && valueRender ? 'pointer-events-none opacity-0' : 'grow'} ${classNames.input}`}
+                                className={`text-body-md placeholder:text-label-lg inline-block h-6 appearance-none overflow-hidden border-none outline-none placeholder:text-slate-300 ${!multiple && value && !isFocus ? 'pointer-events-none w-0 opacity-0' : 'w-25 grow'} ${classNames.input}`}
                                 style={{
                                     color: parsedTextColor
                                 }}
@@ -381,7 +381,12 @@ const AutoComplete = <Opt extends Option>({
                                 className={`transition-transform duration-300 ${menuLocal ? '-rotate-180' : ''}`}
                             />
                             {loading && (
-                                <CircularLoader thickness={2} size={iconSize} color={theme.primary} duration={1000} />
+                                <CircularLoader
+                                    thickness={2}
+                                    size={iconSize}
+                                    color={parsedPrimaryColor}
+                                    duration={1000}
+                                />
                             )}
                             {clearable && hasValue && (
                                 <button
@@ -398,34 +403,34 @@ const AutoComplete = <Opt extends Option>({
                             {!!appendInnerIcon && <Icon icon={appendInnerIcon} color={accentColor} size={iconSize} />}
                             {appendInnerRender?.({ isFocus, isError })}
                         </div>
-                        {!!(label && labelPos === 'inside' && variant === 'outline') && (
+                        {!!(label && labelPos === 'inside') && (
                             <FormLabel
                                 inputId={finalId}
                                 color={accentColor}
-                                className={`pointer-events-none absolute left-0 origin-left -translate-y-1/2 transition-all duration-300 ${labelAscended ? 'text-label-md top-0 translate-x-4' : `text-label-lg top-1/2 ${!!(prependInnerIcon || prependInnerRender) ? 'translate-x-12' : 'translate-x-4'}`} ${classNames.label}`}
+                                className={`pointer-events-none absolute left-0 origin-left -translate-y-1/2 transition-all duration-300 ${labelAscended ? `text-label-md translate-x-4 ${variant === 'outline' ? 'top-0' : '-top-3'}` : `text-label-lg top-1/2 ${!!(prependInnerIcon || prependInnerRender) ? 'translate-x-12' : 'translate-x-4'}`} ${classNames.label}`}
                             >
                                 {label}
                             </FormLabel>
                         )}
-                        {!!(label && labelPos === 'inside' && variant === 'outline') && (
-                            <fieldset
-                                className={`pointer-events-none absolute top-0 left-0 h-full w-full rounded-md px-3 py-0 ${isFocus ? 'border-2' : 'border'}`}
-                                style={{
-                                    borderColor:
-                                        variant === 'outline'
-                                            ? isFocus || isError
-                                                ? parseAccentColor
-                                                : parsedOutlineColor
-                                            : 'transparent'
-                                }}
-                            >
+                        <fieldset
+                            className={`pointer-events-none absolute top-0 left-0 h-full w-full rounded-md px-3 py-0 ${isFocus ? 'border-2' : 'border'}`}
+                            style={{
+                                borderColor:
+                                    variant === 'outline'
+                                        ? isFocus || isError
+                                            ? parseAccentColor
+                                            : parsedOutlineColor
+                                        : 'transparent'
+                            }}
+                        >
+                            {!!(label && labelPos === 'inside') && (
                                 <legend
                                     className={`invisible h-0 overflow-hidden font-semibold whitespace-nowrap duration-300 ${labelAscended ? 'text-label-md w-auto px-1' : 'text-label-lg w-0 px-0'}`}
                                 >
                                     <span>{label}</span>
                                 </legend>
-                            </fieldset>
-                        )}
+                            )}
+                        </fieldset>
                         <Menu
                             open={menuLocal}
                             position='left-bottom'
@@ -490,7 +495,7 @@ const AutoComplete = <Opt extends Option>({
                                                 }}
                                             >
                                                 {!multiple &&
-                                                    (optionRender?.(option, value, isSelected) || (
+                                                    (optionRender?.(option, isSelected) || (
                                                         <span
                                                             className='text-body-md'
                                                             style={{
@@ -501,12 +506,12 @@ const AutoComplete = <Opt extends Option>({
                                                         </span>
                                                     ))}
                                                 {multiple &&
-                                                    (optionRender?.(option, value, isSelected) || (
+                                                    (optionRender?.(option, isSelected) || (
                                                         <Checkbox
                                                             checked={isSelected}
                                                             value={`${option.value}`}
                                                             // onChange={()=>{}} // we don't need it because we handle it in the onOptionSelect
-                                                            color={theme.primary}
+                                                            color={parsedPrimaryColor}
                                                             size='md'
                                                             readOnly //add this to prevent checkbox from being checked when clicked
                                                             hideMessage
@@ -548,9 +553,61 @@ const AutoComplete = <Opt extends Option>({
 
 export default AutoComplete;
 
-//? <label>,<fieldset>,<legend> description:
+//? Coloring of <AutoComplete />:
+//* we use theme={{primary,error,...}} prop and also we have ./colors.ts file with default colors
+//* for every color in 'theme' prop we should use: const parsedPrimaryColor = useColor(theme.primary || colors.primary!)
+//* we can use return value of useColor as inline style or color prop e.g <Icon color={parsedPrimaryColor} style={{color:parsedPrimaryColor}} />
+//? Sizing of <AutoComplete />:
+//* we use fixed height for multiple:false and fixed min-height with height:auto on multiple: true so multiple:true generally take more height than multiple:false
+//? Structure of value and search part:
+//* we render value,search part inside 'flex flex-wrap' ... we use conditional rendering for value part and check value existence and multiple prop ... for search part we check its visibility base on multiple,value,isFocus states
+{
+    /* <div className='flex grow flex-wrap items-center gap-1'>
+    {!!(!multiple && value) && (valueRender?.(value) || <p>{value?.label}</p>)}
+    {!!(multiple && value.length) && (value.map((val) => <div key={val.value}>{valueRender?.(val) || val.label}</div>))}
+    <input className={`${!multiple && value && !isFocus ? 'pointer-events-none w-0 opacity-0' : 'w-25 grow'}`} />
+</div> */
+}
+//? Structure of <label>,<fieldset>,<legend>:
 //* for outline variant we use border on <fieldset>
 //* we use visible <label> and base on focus state change it position also we add hidden <legend> inside <fieldset> with same typography as <label> so it take same space ... because changing transform:scale not affect sizing of <legend> then we change font-size base on focus state
 //* use left/right padding on <fieldset> to set starting location of <legend> empty space and use left/right padding on <legend> to set amount of extra empty space also amount of translate-x on <label> is related to total amount of left/right padding on <fieldset> and <legend>
-//? sizing of <AutoComplete />:
-//* we use fixed height for multiple:false and fixed min-height with height:auto on multiple: true so multiple:true generally take more height than multiple:false
+//? Usage:
+// import AutoComplete, { type Option } from '@/components/AutoComplete';
+// type CustomOption = Option & { desc: string };
+// const options: CustomOption[] = Array.from({ length: 50 }, (_, i) => ({value: i + 1,label: `item-${i + 1}`,desc: 'desc'}));
+//* #1: simple autocomplete :
+// const [val, setVal] = useState<null | CustomOption>(null);
+// <AutoComplete labelPos='inside' mode='autocomplete' variant='outline' size='md'
+//     placeholder='Placeholder' label='Label' options={options}  clearable
+//     value={val} onChange={(newVal) => setVal(newVal)}
+// />
+//* #2: multiple combobox with custom valueRender,optionRender:
+// const [val, setVal] = useState<CustomOption[]>([]);
+// <AutoComplete labelPos='outside' mode='combobox' variant='fill' size='lg'
+//     label='Label' options={options} multiple
+//     valueRender={(valueOption) => <span>{valueOption?.desc}</span>}
+//     optionRender={(option, isSelected) => <span>{option.desc}</span>}
+//     value={val} onChange={(newVal) => setVal2(newVal)} clearable
+// />
+//* #3: single autocomplete with validation using reach-hook-form and controlled search,menu props:
+// const { control, handleSubmit, reset } = useForm<{ country: null | Option }>({
+//     defaultValues: {country: null},mode: 'onSubmit'
+// });
+// const [search, setSearch] = useState('5');
+// const [menu, setMenu] = useState(true);
+// const onSubmit = (data: { country: null | Option }) => {reset();};
+// <form onSubmit={handleSubmit(onSubmit)}>
+//     <Controller
+//         control={control} name='country' rules={{ required: 'required' }}
+//         render={({ field, fieldState }) => (
+//             <AutoComplete {...field} mode='autocomplete' options={options}
+//                 value={field.value} onChange={(newVal) => field.onChange(newVal)}
+//                 search={search} onSearchChange={setSearch}
+//                 menu={menu} onMenuChange={setMenu}
+//                 error={!!fieldState.error} message={fieldState.error?.message}
+//             />
+//         )}
+//     />
+//     <button type='submit'>submit</button>
+// </form>
