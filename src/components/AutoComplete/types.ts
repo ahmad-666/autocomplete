@@ -3,6 +3,7 @@ import { type RefObject, type CSSProperties, type KeyboardEvent, type ReactNode 
 export type Mode = 'select' | 'autocomplete' | 'combobox';
 export type Variant = 'filled' | 'outline';
 export type Size = number | 'sm' | 'md' | 'lg';
+export type LabelPos = 'inside' | 'outside';
 export type BlurReason = 'click-outside' | 'option-select';
 export type SelectReason = 'option-click' | 'enter-key';
 export type Option = {
@@ -60,6 +61,8 @@ export type BaseAutoCompleteProps<Opt extends Option> = {
     options: Opt[];
     /** placeholder */
     placeholder?: string;
+    /** position of label , 'inside' | 'outside' */
+    labelPos?: LabelPos;
     /** label */
     label?: string;
     /** text for loading:true state */

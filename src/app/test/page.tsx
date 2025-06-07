@@ -23,6 +23,7 @@ const TestPage = () => {
             <Container className='!overflow-visible'>
                 <div className='w-200 max-w-full'>
                     <AutoComplete
+                        labelPos='outside'
                         mode='combobox'
                         variant='outline'
                         size='md'
@@ -34,16 +35,19 @@ const TestPage = () => {
                         label='Label'
                     />
                     <AutoComplete
-                        mode='combobox'
+                        labelPos='inside'
+                        mode='autocomplete'
                         variant='outline'
-                        multiple
-                        size='md'
-                        value={val2}
+                        multiple={false}
+                        size='sm'
+                        loading={false}
+                        // prependInnerIcon='mdi:user'
+                        value={val1}
                         options={options}
-                        onChange={(newVal) => setVal2(newVal)}
+                        onChange={(newVal) => setVal1(newVal)}
                         clearable
                         placeholder='Placeholder'
-                        label='Label'
+                        label='Label sd ad sa d sa sadsadsad'
                     />
                 </div>
             </Container>

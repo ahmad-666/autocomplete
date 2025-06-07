@@ -15,7 +15,7 @@ export default function FormLabel({ inputId, color = 'slate-700', children, onCl
     return (
         <div
             onClick={onClick}
-            className={`text-label-lg inline-block font-semibold ${className}`}
+            className={`text-label-lg inline-block font-semibold whitespace-nowrap ${className}`}
             style={{ color: parsedColor }}
         >
             <label htmlFor={inputId}>{children}</label>
